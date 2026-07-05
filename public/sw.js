@@ -1,9 +1,7 @@
-const CACHE_NAME = "recepia-v1";
+const CACHE_NAME = "recepia-v2";
 
 const PRECACHE_URLS = [
   "/",
-  "/recipes",
-  "/settings",
   "/manifest.json",
 ];
 

@@ -113,7 +113,7 @@ export default function Home() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-6 pb-24">
+    <div className="mx-auto max-w-xl px-4 py-6 pb-24">
       <h1 className="mb-1 text-2xl font-bold tracking-tight">{t("create.title")}</h1>
       <p className="mb-5 text-sm text-zinc-500 dark:text-zinc-400">{t("create.subtitle")}</p>
 
