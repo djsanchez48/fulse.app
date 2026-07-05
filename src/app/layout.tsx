@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Food AI & Recipes",
+  title: "RecepIA",
   description: "Discover, create, and plan meals with AI-powered recipes",
 };
 

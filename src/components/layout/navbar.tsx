@@ -8,7 +8,7 @@ export function Navbar() {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-2 font-bold text-xl">
           <UtensilsCrossed className="h-6 w-6 text-orange-500" />
-          <span>Food AI</span>
+          <span>RecepIA</span>
         </Link>
         <nav className="flex items-center gap-4">
           <Link href="/recipes" className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50">

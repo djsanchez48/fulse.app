@@ -1,4 +1,6 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# RecepIA
+
+AI-powered recipe generator, meal planner, and kitchen companion.
 
 ## Getting Started
 

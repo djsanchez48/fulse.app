@@ -36,8 +36,8 @@ export default function Home() {
       <section className="relative overflow-hidden bg-gradient-to-b from-orange-50 to-white px-4 py-24 dark:from-zinc-900 dark:to-zinc-950 sm:py-32">
         <div className="mx-auto max-w-4xl text-center">
           <h1 className="text-4xl font-bold tracking-tight sm:text-6xl">
-            Your AI-Powered
-            <span className="text-orange-500"> Kitchen Companion</span>
+            RecepIA
+            <span className="text-orange-500"> — Your AI Kitchen</span>
           </h1>
           <p className="mt-6 text-lg leading-8 text-zinc-600 dark:text-zinc-400">
             Generate recipes from your cravings, discover meals from ingredients you have,
