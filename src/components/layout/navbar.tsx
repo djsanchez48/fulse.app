@@ -4,16 +4,18 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Sparkles, BookOpen, ChefHat, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const tabs = [
-  { href: "/", label: "Crear", icon: Sparkles },
-  { href: "/recipes", label: "Mis recetas", icon: BookOpen },
-  { href: "/pantry", label: "Mi nevera", icon: ChefHat, disabled: true, badge: "Próximamente" },
-  { href: "/settings", label: "Ajustes", icon: Settings },
-];
+import { useI18n } from "@/lib/i18n-context";
 
 export function Navbar() {
+  const { t } = useI18n();
   const pathname = usePathname();
+
+  const navTabs = [
+    { href: "/", label: t("nav.create"), icon: Sparkles },
+    { href: "/recipes", label: t("nav.recipes"), icon: BookOpen },
+    { href: "/pantry", label: t("nav.pantry"), icon: ChefHat, disabled: true, badge: t("nav.coming_soon") },
+    { href: "/settings", label: t("nav.settings"), icon: Settings },
+  ];
 
   return (
     <>
@@ -21,14 +23,14 @@ export function Navbar() {
         <div className="mx-auto flex h-14 max-w-md items-center justify-center px-4">
           <Link href="/" className="flex items-center gap-2 font-bold text-lg">
             <span className="text-orange-500 text-xl">🍳</span>
-            <span>RecepIA</span>
+            <span>{t("app.title")}</span>
           </Link>
         </div>
       </header>
 
       <nav className="fixed bottom-0 z-50 w-full border-t border-zinc-200 bg-white/95 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/95">
         <div className="mx-auto flex max-w-md items-center justify-around h-16">
-          {tabs.map((tab) => {
+          {navTabs.map((tab) => {
             const isActive = pathname === tab.href;
             const Icon = tab.icon;
             return (
