@@ -90,37 +90,14 @@ export const translations = {
     "settings.lang_es": "Español",
     "settings.lang_en": "English",
 
-    "ai.system_prompt": `Eres un chef experto. Genera UNA receta basada en la conversación con el usuario.
-Si el usuario pide ajustes a una receta anterior, devuelve la receta COMPLETA corregida.
+    "pantry.title": "Mi nevera",
+    "pantry.subtitle": "Toma una foto de tus ingredientes y la IA te dirá qué puedes cocinar.",
+    "pantry.upload_hint": "Tomar foto o seleccionar imagen",
+    "pantry.detecting": "Detectando...",
+    "pantry.detect": "Detectar ingredientes",
+    "pantry.detected": "Ingredientes detectados:",
 
-Perfil del usuario (respétalo SIEMPRE, sin que lo repita):
-- Alergias: {allergies} — NUNCA incluir estos ingredientes
-- Restricciones: {restrictions}
-- No le gusta: {dislikedIngredients} — evitarlos
-- Le encanta: {lovedIngredients} — favorecerlos cuando tenga sentido
-- Equipo disponible: {equipment} — solo proponer técnicas posibles con este equipo
-- Porciones por defecto si no especifica: {defaultServings}
-
-Responde ÚNICAMENTE con un objeto JSON válido con esta estructura exacta, sin texto adicional:
-{{
-  "title": "string",
-  "description": "string breve y apetitosa (1-2 frases)",
-  "prepTimeMinutes": number,
-  "cookTimeMinutes": number,
-  "servings": number,
-  "tags": ["string"],
-  "ingredients": [
-    {{
-      "name": "string en minúsculas y singular",
-      "quantity": number | null,
-      "unit": "string o null",
-      "quantityText": "string o null",
-      "note": "string o null"
-    }}
-  ],
-  "steps": ["string"]
-}}
-Usa ingredientes comunes y unidades métricas o caseras.`,
+    "ai.system_prompt": "Eres un chef experto. Genera UNA receta basada en la conversación con el usuario.\nSi el usuario pide ajustes a una receta anterior, devuelve la receta COMPLETA corregida.\n\nPerfil del usuario (respétalo SIEMPRE, sin que lo repita):\n- Alergias: {allergies} — NUNCA incluir estos ingredientes\n- Restricciones: {restrictions}\n- No le gusta: {dislikedIngredients} — evitarlos\n- Le encanta: {lovedIngredients} — favorecerlos cuando tenga sentido\n- Equipo disponible: {equipment} — solo proponer técnicas posibles con este equipo\n- Porciones por defecto si no especifica: {defaultServings}\n\nResponde ÚNICAMENTE con un objeto JSON válido con esta estructura exacta, sin texto adicional:\n{{\n  \"title\": \"string\",\n  \"description\": \"string breve y apetitosa (1-2 frases)\",\n  \"prepTimeMinutes\": number,\n  \"cookTimeMinutes\": number,\n  \"servings\": number,\n  \"tags\": [\"string\"],\n  \"ingredients\": [\n    {{\n      \"name\": \"string en minúsculas y singular\",\n      \"quantity\": number | null,\n      \"unit\": \"string o null\",\n      \"quantityText\": \"string o null\",\n      \"note\": \"string o null\"\n    }}\n  ],\n  \"steps\": [\"string\"]\n}}\nUsa ingredientes comunes y unidades métricas o caseras.",
   },
 
   en: {
@@ -210,6 +187,13 @@ Usa ingredientes comunes y unidades métricas o caseras.`,
     "settings.language": "Language",
     "settings.lang_es": "Español",
     "settings.lang_en": "English",
+
+    "pantry.title": "My Pantry",
+    "pantry.subtitle": "Take a photo of your ingredients and AI will tell you what you can cook.",
+    "pantry.upload_hint": "Take photo or select image",
+    "pantry.detecting": "Detecting...",
+    "pantry.detect": "Detect ingredients",
+    "pantry.detected": "Detected ingredients:",
 
     "ai.system_prompt": `You are an expert chef. Generate ONE recipe based on the conversation with the user.
 If the user asks for adjustments to a previous recipe, return the COMPLETE corrected recipe.

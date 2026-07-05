@@ -13,7 +13,7 @@ export function Navbar() {
   const navTabs = [
     { href: "/", label: t("nav.create"), icon: Sparkles },
     { href: "/recipes", label: t("nav.recipes"), icon: BookOpen },
-    { href: "/pantry", label: t("nav.pantry"), icon: ChefHat, disabled: true, badge: t("nav.coming_soon") },
+    { href: "/pantry", label: t("nav.pantry"), icon: ChefHat },
     { href: "/settings", label: t("nav.settings"), icon: Settings },
   ];
 
@@ -36,24 +36,16 @@ export function Navbar() {
             return (
               <Link
                 key={tab.href}
-                href={tab.disabled ? "#" : tab.href}
+                href={tab.href}
                 className={cn(
-                  "flex flex-col items-center gap-0.5 px-3 py-1.5 text-xs font-medium transition-colors relative",
-                  tab.disabled
-                    ? "opacity-40 cursor-not-allowed"
-                    : isActive
-                      ? "text-orange-600 dark:text-orange-400"
-                      : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300"
+                  "flex flex-col items-center gap-0.5 px-3 py-1.5 text-xs font-medium transition-colors",
+                  isActive
+                    ? "text-orange-600 dark:text-orange-400"
+                    : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300"
                 )}
-                onClick={(e) => tab.disabled && e.preventDefault()}
               >
                 <Icon className="h-5 w-5" />
                 <span>{tab.label}</span>
-                {tab.badge && (
-                  <span className="absolute -top-0.5 right-1 rounded-full bg-orange-100 px-1 py-0 text-[9px] font-medium text-orange-700 dark:bg-orange-900 dark:text-orange-300">
-                    {tab.badge}
-                  </span>
-                )}
               </Link>
             );
           })}
