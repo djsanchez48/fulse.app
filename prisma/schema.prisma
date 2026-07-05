@@ -7,94 +7,84 @@ datasource db {
   provider = "postgresql"
 }
 
-model User {
-  id            String          @id @default(cuid())
-  email         String          @unique
-  name          String?
-  image         String?
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-
-  recipes       Recipe[]
-  savedRecipes  SavedRecipe[]
-  mealPlans     MealPlan[]
-  generations   AiGeneration[]
-}
-
 model Recipe {
-  id            String          @id @default(cuid())
-  title         String
-  description   String
-  ingredients   Json
-  instructions  String[]
-  prepTime      Int?
-  cookTime      Int?
-  difficulty    Difficulty?
-  cuisine       String?
-  image         String?
-  isAIGenerated Boolean         @default(false)
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-
-  authorId      String?
-  author        User?           @relation(fields: [authorId], references: [id])
-  savedBy       SavedRecipe[]
-  mealPlanItems MealPlanItem[]
+  id              String             @id @default(cuid())
+  title           String
+  description     String?
+  steps           String[]
+  prepTimeMinutes Int?
+  cookTimeMinutes Int?
+  servings        Int?
+  tags            String[]           @default([])
+  source          String             @default("ai")
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  ingredients     RecipeIngredient[]
+  collections     RecipeCollection[]
 }
 
-model SavedRecipe {
-  userId    String
-  recipeId  String
-  createdAt DateTime  @default(now())
-
-  user   User   @relation(fields: [userId], references: [id])
-  recipe Recipe @relation(fields: [recipeId], references: [id])
-
-  @@id([userId, recipeId])
+model Ingredient {
+  id      String             @id @default(cuid())
+  name    String             @unique
+  recipes RecipeIngredient[]
 }
 
-model MealPlan {
-  id        String          @id @default(cuid())
-  weekStart DateTime
-  userId    String
-  createdAt DateTime        @default(now())
+model RecipeIngredient {
+  recipeId     String
+  ingredientId String
+  quantity     Float?
+  unit         String?
+  quantityText String?
+  note         String?
+  recipe       Recipe     @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
 
-  user    User            @relation(fields: [userId], references: [id])
-  meals   MealPlanItem[]
+  @@id([recipeId, ingredientId])
+  @@index([ingredientId])
 }
 
-model MealPlanItem {
-  id          String   @id @default(cuid())
-  dayOfWeek   Int
-  mealType    MealType
-  recipeId    String
-  mealPlanId  String
+model Collection {
+  id        String             @id @default(cuid())
+  name      String             @unique
+  emoji     String?
+  createdAt DateTime           @default(now())
+  recipes   RecipeCollection[]
+}
 
-  recipe   Recipe   @relation(fields: [recipeId], references: [id])
-  mealPlan MealPlan @relation(fields: [mealPlanId], references: [id])
+model RecipeCollection {
+  recipeId     String
+  collectionId String
+  addedAt      DateTime   @default(now())
+  recipe       Recipe     @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+
+  @@id([recipeId, collectionId])
+  @@index([collectionId])
+}
+
+model UserProfile {
+  id                  String   @id @default("main")
+  allergies           String[] @default([])
+  restrictions        String[] @default([])
+  dislikedIngredients String[] @default([])
+  lovedIngredients    String[] @default([])
+  equipment           String[] @default([])
+  defaultServings     Int      @default(2)
+  updatedAt           DateTime @updatedAt
+}
+
+model GenerationDraft {
+  id         String   @id @default(cuid())
+  prompt     String
+  recipeJson Json
+  createdAt  DateTime @default(now())
 }
 
 model AiGeneration {
-  id        String   @id @default(cuid())
-  prompt    String
-  result    Json
-  model     String   @default("deepseek-chat")
-  userId    String
-  createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id])
-}
-
-enum Difficulty {
-  EASY
-  MEDIUM
-  HARD
-}
-
-enum MealType {
-  BREAKFAST
-  LUNCH
-  DINNER
-  SNACK
-  DESSERT
+  id               String   @id @default(cuid())
+  provider         String
+  model            String
+  promptTokens     Int?
+  completionTokens Int?
+  createdAt        DateTime @default(now())
 }

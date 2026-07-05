@@ -1,83 +1,75 @@
-import Link from "next/link";
-import { ArrowRight, Sparkles, Search, Calendar, BookOpen } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+"use client";
 
-const features = [
-  {
-    title: "AI Recipe Generator",
-    description: "Describe what you're craving, and let AI create the perfect recipe for you.",
-    icon: Sparkles,
-    href: "/ai-generate",
-  },
-  {
-    title: "What's in Your Fridge?",
-    description: "List your ingredients and discover recipes you can make right now.",
-    icon: Search,
-    href: "/ai-generate",
-  },
-  {
-    title: "Meal Planner",
-    description: "Plan your week with AI-powered meal suggestions and auto-generated shopping lists.",
-    icon: Calendar,
-    href: "/meal-planner",
-  },
-  {
-    title: "Recipe Collection",
-    description: "Browse, save, and organize your favorite recipes in one place.",
-    icon: BookOpen,
-    href: "/recipes",
-  },
-];
+import { useState } from "react";
+import { Sparkles, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function Home() {
-  return (
-    <div className="flex flex-col">
-      <section className="relative overflow-hidden bg-gradient-to-b from-orange-50 to-white px-4 py-24 dark:from-zinc-900 dark:to-zinc-950 sm:py-32">
-        <div className="mx-auto max-w-4xl text-center">
-          <h1 className="text-4xl font-bold tracking-tight sm:text-6xl">
-            RecepIA
-            <span className="text-orange-500"> — Your AI Kitchen</span>
-          </h1>
-          <p className="mt-6 text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Generate recipes from your cravings, discover meals from ingredients you have,
-            and plan your weekly menu — all powered by AI.
-          </p>
-          <div className="mt-10 flex items-center justify-center gap-4">
-            <Button size="lg" asChild>
-              <Link href="/ai-generate">
-                Try AI Generator <Sparkles className="ml-1 h-4 w-4" />
-              </Link>
-            </Button>
-            <Button variant="outline" size="lg" asChild>
-              <Link href="/recipes">
-                Browse Recipes <ArrowRight className="ml-1 h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </section>
+  const [prompt, setPrompt] = useState("");
+  const [loading, setLoading] = useState(false);
 
-      <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {features.map((feature) => (
-            <Link key={feature.title} href={feature.href}>
-              <Card className="group h-full transition-colors hover:border-orange-200 dark:hover:border-orange-800">
-                <CardHeader>
-                  <feature.icon className="h-8 w-8 text-orange-500" />
-                  <CardTitle className="mt-2">{feature.title}</CardTitle>
-                  <CardDescription>{feature.description}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <span className="inline-flex items-center text-sm font-medium text-orange-500 group-hover:underline">
-                    Get started <ArrowRight className="ml-1 h-3 w-3" />
-                  </span>
-                </CardContent>
-              </Card>
-            </Link>
+  const quickPrompts = [
+    "Algo rápido con pollo",
+    "Pasta cremosa",
+    "Ensalada fresca",
+    "Desayuno saludable",
+  ];
+
+  async function handleGenerate(e: React.FormEvent) {
+    e.preventDefault();
+    if (!prompt.trim()) return;
+    setLoading(true);
+    // TODO: Step 2 — call /api/ai/generate
+    setTimeout(() => setLoading(false), 1000);
+  }
+
+  return (
+    <div className="mx-auto max-w-md px-4 py-8 pb-24">
+      <h1 className="mb-2 text-2xl font-bold tracking-tight">
+        ¿Qué quieres cocinar hoy?
+      </h1>
+      <p className="mb-6 text-sm text-zinc-500 dark:text-zinc-400">
+        Describe lo que se te antoje y la IA te dará una receta completa.
+      </p>
+
+      <form onSubmit={handleGenerate} className="space-y-3">
+        <textarea
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          placeholder='"Una pasta cremosa con champiñones", "Algo con lo que tenga en la nevera"...'
+          className="w-full min-h-24 rounded-xl border border-zinc-200 bg-white p-4 text-sm placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-orange-400 dark:border-zinc-800 dark:bg-zinc-900 dark:placeholder:text-zinc-600"
+        />
+
+        <div className="flex flex-wrap gap-2">
+          {quickPrompts.map((q) => (
+            <button
+              key={q}
+              type="button"
+              onClick={() => setPrompt(q)}
+              className="rounded-full border border-zinc-200 px-3 py-1 text-xs text-zinc-600 hover:border-orange-300 hover:text-orange-600 dark:border-zinc-700 dark:text-zinc-400"
+            >
+              {q}
+            </button>
           ))}
         </div>
-      </section>
+
+        <Button type="submit" disabled={loading || !prompt.trim()} className="w-full h-12">
+          {loading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Generando receta...
+            </>
+          ) : (
+            <>
+              <Sparkles className="h-4 w-4" />
+              Generar receta
+            </>
+          )}
+        </Button>
+      </form>
+
+      {/* Result will appear here in Step 4 */}
     </div>
   );
 }
