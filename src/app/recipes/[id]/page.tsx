@@ -75,13 +75,13 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
     router.push("/recipes");
   }
 
-  if (loading) return <div className="content-container px-4 py-6 pb-24"><div className="space-y-3">{[1, 2, 3, 4].map((i) => <div key={i} className="h-20 animate-pulse rounded-xl bg-zinc-100 dark:bg-zinc-800" />)}</div></div>;
-  if (!recipe) return <div className="content-container px-4 py-6 pb-24 text-center"><p className="text-zinc-500">{t("detail.not_found")}</p></div>;
+  if (loading) return <div className="mx-auto max-w-2xl px-4 py-6 pb-24"><div className="space-y-3">{[1, 2, 3, 4].map((i) => <div key={i} className="h-20 animate-pulse rounded-xl bg-zinc-100 dark:bg-zinc-800" />)}</div></div>;
+  if (!recipe) return <div className="mx-auto max-w-2xl px-4 py-6 pb-24 text-center"><p className="text-zinc-500">{t("detail.not_found")}</p></div>;
 
   const totalTime = (recipe.prepTimeMinutes ?? 0) + (recipe.cookTimeMinutes ?? 0);
 
   return (
-    <div className="content-container px-4 py-6 pb-24">
+    <div className="mx-auto max-w-2xl px-4 py-6 pb-24">
       <h1 className="text-2xl font-bold leading-tight">{recipe.title}</h1>
       {recipe.description && <p className="mt-1 text-zinc-500 dark:text-zinc-400">{recipe.description}</p>}
       <div className="mt-3 flex flex-wrap items-center gap-2">
