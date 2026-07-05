@@ -113,13 +113,19 @@ export default function Home() {
   }
 
   return (
-    <div className="mx-auto max-w-md px-4 py-6 pb-24">
+    <div className="mx-auto max-w-md md:max-w-2xl px-4 py-6 pb-24">
       <h1 className="mb-1 text-2xl font-bold tracking-tight">{t("create.title")}</h1>
       <p className="mb-5 text-sm text-zinc-500 dark:text-zinc-400">{t("create.subtitle")}</p>
 
       <form onSubmit={handleGenerate} className="space-y-3 mb-6">
         <textarea
           value={prompt} onChange={(e) => setPrompt(e.target.value)}
+          onKeyDown={(e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+              e.preventDefault();
+              handleGenerate();
+            }
+          }}
           placeholder={t("create.placeholder")}
           className="w-full min-h-24 rounded-xl border border-zinc-200 bg-white p-4 text-sm placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-orange-400 dark:border-zinc-800 dark:bg-zinc-900 dark:placeholder:text-zinc-600"
         />
@@ -145,6 +151,12 @@ export default function Home() {
           {!saved && (
             <form onSubmit={handleAdjust} className="flex gap-2">
               <input type="text" value={adjustment} onChange={(e) => setAdjustment(e.target.value)}
+                onKeyDown={(e) => {
+                  if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                    e.preventDefault();
+                    handleAdjust(e);
+                  }
+                }}
                 placeholder={t("create.adjust_placeholder")}
                 className="flex-1 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-orange-400 dark:border-zinc-800 dark:bg-zinc-900 dark:placeholder:text-zinc-600" />
               <Button type="submit" size="sm" disabled={loading || !adjustment.trim()} className="shrink-0">
