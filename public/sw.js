@@ -1,4 +1,4 @@
-const CACHE_NAME = "recepia-v2";
+const CACHE_NAME = "recepia-v3";
 
 const PRECACHE_URLS = [
   "/",

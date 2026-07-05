@@ -5,6 +5,7 @@ import {
   useContext,
   useState,
   useEffect,
+  useInsertionEffect,
   type ReactNode,
 } from "react";
 import { type Lang } from "@/lib/i18n";
@@ -22,20 +23,25 @@ const I18nContext = createContext<I18nContextType>({
   t: (key) => key,
 });
 
-function getLang(): Lang {
+function translate(lang: Lang, key: string): string {
+  const dict = translations[lang] as Record<string, string>;
+  const esDict = translations["es"] as Record<string, string>;
+  return dict[key] ?? esDict[key] ?? key;
+}
+
+function detectLang(): Lang {
   if (typeof window === "undefined") return "es";
   const stored = localStorage.getItem("recepia-lang") as Lang | null;
   if (stored === "es" || stored === "en") return stored;
-  const browserLang = navigator.language?.slice(0, 2);
-  return browserLang === "es" ? "es" : "en";
+  return navigator.language?.slice(0, 2) === "es" ? "es" : "en";
 }
 
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [lang, setLangState] = useState<Lang>(getLang);
+  const [lang, setLangState] = useState<Lang>("es");
 
-  useEffect(() => {
-    const actual = getLang();
-    if (actual !== lang) setLangState(actual);
+  useInsertionEffect(() => {
+    const detected = detectLang();
+    if (detected !== "es") setLangState(detected);
   }, []);
 
   const handleSetLang = (l: Lang) => {
@@ -43,11 +49,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("recepia-lang", l);
   };
 
-  const t = (key: string): string => {
-    const dict = translations[lang] as Record<string, string> | undefined;
-    const esDict = translations["es"] as Record<string, string>;
-    return dict?.[key] ?? esDict[key] ?? key;
-  };
+  const t = (key: string): string => translate(lang, key);
 
   return (
     <I18nContext.Provider value={{ lang, setLang: handleSetLang, t }}>
