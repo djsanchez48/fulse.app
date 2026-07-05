@@ -20,7 +20,7 @@ export function Navbar() {
   return (
     <>
       <header className="sticky top-0 z-50 w-full border-b border-zinc-200 bg-white/80 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/80">
-        <div className="mx-auto flex h-14 max-w-md md:max-w-2xl items-center justify-center px-4">
+        <div className="mx-auto flex h-14 content-container items-center justify-center px-4">
           <Link href="/" className="flex items-center gap-2 font-bold text-lg">
             <span className="text-orange-500 text-xl">🍳</span>
             <span>{t("app.title")}</span>
@@ -29,7 +29,7 @@ export function Navbar() {
       </header>
 
       <nav className="fixed bottom-0 z-50 w-full border-t border-zinc-200 bg-white/95 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/95">
-        <div className="mx-auto flex max-w-md md:max-w-2xl items-center justify-around h-16">
+        <div className="mx-auto flex content-container items-center justify-around h-16">
           {navTabs.map((tab) => {
             const isActive = pathname === tab.href;
             const Icon = tab.icon;
