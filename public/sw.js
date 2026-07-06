@@ -1,4 +1,4 @@
-const CACHE_NAME = "recepia-v3";
+const CACHE_NAME = "recepia-v4";
 
 const PRECACHE_URLS = [
   "/",
@@ -29,28 +29,23 @@ self.addEventListener("fetch", (event) => {
 
   if (url.origin !== self.location.origin) return;
 
-  if (
-    request.destination === "style" ||
-    request.destination === "script" ||
-    request.destination === "font" ||
-    request.destination === "image"
-  ) {
+  if (request.destination === "font" || request.destination === "image") {
     event.respondWith(
       caches.match(request).then(
-        (cached) => cached || fetch(request).then((res) => {
-          const clone = res.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-          return res;
-        })
-      )
+        (cached) =>
+          cached ||
+          fetch(request).then((res) => {
+            const clone = res.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+            return res;
+          }),
+      ),
     );
     return;
   }
 
   if (request.destination === "document") {
-    event.respondWith(
-      fetch(request).catch(() => caches.match("/"))
-    );
+    event.respondWith(fetch(request).catch(() => caches.match("/")));
     return;
   }
 });
