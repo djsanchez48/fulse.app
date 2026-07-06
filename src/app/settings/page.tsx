@@ -175,13 +175,23 @@ export default function SettingsPage() {
             </div>
           </div>
           <div>
-            <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">Sexo biológico</label>
-            <select value={profile.biologicalSex ?? ""} onChange={(e) => setProfile({ ...profile, biologicalSex: e.target.value || null })}
-              className="w-40 rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-800 dark:bg-zinc-900">
-              <option value="">—</option>
-              <option value="m">Masculino</option>
-              <option value="f">Femenino</option>
-            </select>
+            <p className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1.5">Tu cuerpo</p>
+            <div className="flex gap-2">
+              {[
+                { value: "m", label: "Hombre" },
+                { value: "f", label: "Mujer" },
+                { value: null, label: "Prefiero no decir" },
+              ].map((opt) => (
+                <button key={opt.label} onClick={() => setProfile({ ...profile, biologicalSex: opt.value })}
+                  className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+                    profile.biologicalSex === opt.value
+                      ? "bg-orange-100 text-orange-700 ring-1 ring-orange-400 dark:bg-orange-900/40 dark:text-orange-300"
+                      : "bg-zinc-100 text-zinc-500 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400"
+                  }`}>
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
