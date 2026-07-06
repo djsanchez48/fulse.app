@@ -125,6 +125,9 @@ export default function BienvenidaPage() {
         <h2 className="mb-3 text-sm font-semibold text-zinc-700 dark:text-zinc-300">
           ¿Quieres que tus recetas apunten a algo?
         </h2>
+        <p className="mb-2 text-xs text-zinc-400 dark:text-zinc-500">
+          Máximo 2 — elige lo más importante para ti
+        </p>
         <div className="flex flex-wrap gap-2">
           {GOAL_CATALOG.map((g) => {
             const active = selectedGoals.includes(g.id);
