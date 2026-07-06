@@ -156,7 +156,18 @@ export default function Home() {
     const res = await fetch("/api/recipes", {
       method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
     });
-    if (res.ok) { setSaved(true); setDraftId(null); loadDrafts(); }
+    if (res.ok) {
+      setSaved(true);
+      setDraftId(null);
+      loadDrafts();
+      if (source === "imported") {
+        setImportText("");
+        setRecipe(null);
+        setParseResult(null);
+        setEditing(false);
+        setSource("ai");
+      }
+    }
     setSaving(false);
   }
 
