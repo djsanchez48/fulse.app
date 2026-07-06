@@ -151,19 +151,19 @@ export default function SettingsPage() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">Edad</label>
-              <Input type="number" min={1} max={120} value={profile.age ?? ""} onChange={(e) => setProfile({ ...profile, age: e.target.value ? parseInt(e.target.value) : null })} />
+              <Input type="number" min={1} max={120} disabled={!consent} value={profile.age ?? ""} onChange={(e) => setProfile({ ...profile, age: e.target.value ? parseInt(e.target.value) : null })} />
             </div>
             <div>
               <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">Peso (kg)</label>
-              <Input type="number" min={30} max={300} step="0.1" value={profile.weightKg ?? ""} onChange={(e) => setProfile({ ...profile, weightKg: e.target.value ? parseFloat(e.target.value) : null })} />
+              <Input type="number" min={30} max={300} step="0.1" disabled={!consent} value={profile.weightKg ?? ""} onChange={(e) => setProfile({ ...profile, weightKg: e.target.value ? parseFloat(e.target.value) : null })} />
             </div>
             <div>
               <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">Estatura (cm)</label>
-              <Input type="number" min={100} max={250} value={profile.heightCm ?? ""} onChange={(e) => setProfile({ ...profile, heightCm: e.target.value ? parseInt(e.target.value) : null })} />
+              <Input type="number" min={100} max={250} disabled={!consent} value={profile.heightCm ?? ""} onChange={(e) => setProfile({ ...profile, heightCm: e.target.value ? parseInt(e.target.value) : null })} />
             </div>
             <div>
               <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">Actividad</label>
-              <select value={profile.activityLevel ?? ""} onChange={(e) => setProfile({ ...profile, activityLevel: e.target.value || null })}
+              <select disabled={!consent} value={profile.activityLevel ?? ""} onChange={(e) => setProfile({ ...profile, activityLevel: e.target.value || null })}
                 className="w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-800 dark:bg-zinc-900">
                 <option value="">—</option>
                 <option value="sedentario">Sedentario</option>
@@ -175,7 +175,6 @@ export default function SettingsPage() {
             </div>
           </div>
           <div>
-            <p className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1.5">Tu cuerpo</p>
             <div className="flex gap-2">
               {[
                 { value: "m", label: "Hombre" },
@@ -183,10 +182,13 @@ export default function SettingsPage() {
                 { value: null, label: "Prefiero no decir" },
               ].map((opt) => (
                 <button key={opt.label} onClick={() => setProfile({ ...profile, biologicalSex: opt.value })}
+                  disabled={!consent}
                   className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
                     profile.biologicalSex === opt.value
                       ? "bg-orange-100 text-orange-700 ring-1 ring-orange-400 dark:bg-orange-900/40 dark:text-orange-300"
-                      : "bg-zinc-100 text-zinc-500 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400"
+                      : consent
+                        ? "bg-zinc-100 text-zinc-500 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400"
+                        : "bg-zinc-50 text-zinc-300 cursor-not-allowed dark:bg-zinc-800/50 dark:text-zinc-600"
                   }`}>
                   {opt.label}
                 </button>
