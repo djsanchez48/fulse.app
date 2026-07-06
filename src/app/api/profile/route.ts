@@ -35,13 +35,21 @@ export async function PUT(req: NextRequest) {
   try {
     const body = await req.json();
     const {
-      allergies,
-      restrictions,
-      dislikedIngredients,
-      lovedIngredients,
-      equipment,
-      defaultServings,
+      allergies, restrictions, dislikedIngredients, lovedIngredients,
+      equipment, defaultServings, goals, goalsActive,
+      age, weightKg, heightCm, activityLevel, biologicalSex, healthDataConsent,
     } = body;
+
+    const existing = await prisma.userProfile.findUnique({ where: { id: "main" } });
+    const hasBodyData = age != null || weightKg != null || heightCm != null ||
+      activityLevel != null || biologicalSex != null;
+
+    if (hasBodyData && !existing?.healthDataConsentAt && !healthDataConsent) {
+      return NextResponse.json(
+        { error: "Se requiere consentimiento para guardar datos personales" },
+        { status: 403 },
+      );
+    }
 
     const profile = await prisma.userProfile.upsert({
       where: { id: "main" },
@@ -52,6 +60,15 @@ export async function PUT(req: NextRequest) {
         ...(lovedIngredients !== undefined && { lovedIngredients }),
         ...(equipment !== undefined && { equipment }),
         ...(defaultServings !== undefined && { defaultServings }),
+        ...(goals !== undefined && { goals: goals.slice(0, 2) }),
+        ...(goalsActive !== undefined && { goalsActive }),
+        ...(age !== undefined && { age }),
+        ...(weightKg !== undefined && { weightKg }),
+        ...(heightCm !== undefined && { heightCm }),
+        ...(activityLevel !== undefined && { activityLevel }),
+        ...(biologicalSex !== undefined && { biologicalSex }),
+        ...(healthDataConsent === true && !existing?.healthDataConsentAt
+          ? { healthDataConsentAt: new Date() } : {}),
       },
       create: {
         id: "main",
@@ -61,6 +78,8 @@ export async function PUT(req: NextRequest) {
         lovedIngredients: lovedIngredients ?? [],
         equipment: equipment ?? [],
         defaultServings: defaultServings ?? 2,
+        goals: (goals ?? []).slice(0, 2),
+        goalsActive: goalsActive ?? true,
       },
     });
 

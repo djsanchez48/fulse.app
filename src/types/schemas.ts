@@ -19,6 +19,13 @@ export const generatedRecipeSchema = z.object({
     .array(recipeIngredientSchema)
     .min(1, "Debe tener al menos un ingrediente"),
   steps: z.array(z.string().min(1)).min(1, "Debe tener al menos un paso"),
+  nutrition: z.object({
+    caloriesPerServing: z.number().int().min(0),
+    proteinG: z.number().min(0),
+    carbsG: z.number().min(0),
+    fatG: z.number().min(0),
+  }).optional(),
+  nutriBadges: z.array(z.string()).optional(),
 });
 
 export const parsedRecipeSchema = z.object({

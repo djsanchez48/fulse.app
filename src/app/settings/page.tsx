@@ -1,17 +1,22 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Edit2, Trash2, Check, X, Globe } from "lucide-react";
+import { Edit2, Trash2, Check, X, Globe, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { TagInput } from "@/components/ui/TagInput";
 import { useI18n } from "@/lib/i18n-context";
+import { GOAL_CATALOG, type Goal } from "@/lib/nutrition/targets";
 
 type Lang = "es" | "en";
 
 interface Profile {
   allergies: string[]; restrictions: string[]; dislikedIngredients: string[];
   lovedIngredients: string[]; equipment: string[]; defaultServings: number;
+  goals: Goal[]; goalsActive: boolean;
+  age: number | null; weightKg: number | null; heightCm: number | null;
+  activityLevel: string | null; biologicalSex: string | null;
+  healthDataConsentAt: string | null;
 }
 
 interface CollectionItem { id: string; name: string; emoji: string | null; _count: { recipes: number }; }
@@ -19,16 +24,25 @@ interface CollectionItem { id: string; name: string; emoji: string | null; _coun
 export default function SettingsPage() {
   const { t, lang, setLang } = useI18n();
   const [profile, setProfile] = useState<Profile>({
-    allergies: [], restrictions: [], dislikedIngredients: [],
-    lovedIngredients: [], equipment: [], defaultServings: 2,
+    allergies: [], restrictions: [], dislikedIngredients: [], lovedIngredients: [],
+    equipment: [], defaultServings: 2, goals: [], goalsActive: true,
+    age: null, weightKg: null, heightCm: null, activityLevel: null, biologicalSex: null,
+    healthDataConsentAt: null,
   });
   const [collections, setCollections] = useState<CollectionItem[]>([]);
   const [generationCount, setGenerationCount] = useState(0);
   const [saved, setSaved] = useState(false);
   const [editingCol, setEditingCol] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
+  const [consent, setConsent] = useState(false);
 
-  useEffect(() => { fetch("/api/profile").then((r) => r.json()).then(setProfile); fetch("/api/collections").then((r) => r.json()).then(setCollections); }, []);
+  useEffect(() => {
+    fetch("/api/profile").then((r) => r.json()).then((p) => {
+      setProfile(p);
+      setConsent(!!p.healthDataConsentAt);
+    });
+    fetch("/api/collections").then((r) => r.json()).then(setCollections);
+  }, []);
 
   useEffect(() => {
     const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
@@ -37,14 +51,30 @@ export default function SettingsPage() {
     });
   }, []);
 
+  function toggleGoal(goal: Goal) {
+    setProfile((p) => {
+      const has = p.goals.includes(goal);
+      if (has) return { ...p, goals: p.goals.filter((g) => g !== goal) };
+      if (p.goals.length >= 2) return p;
+      return { ...p, goals: [...p.goals, goal] };
+    });
+  }
+
   async function saveProfile() {
-    await fetch("/api/profile", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(profile) });
+    await fetch("/api/profile", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...profile, healthDataConsent: consent ? true : undefined }),
+    });
     setSaved(true); setTimeout(() => setSaved(false), 2000);
   }
 
   async function renameCollection(id: string) {
     if (!editName.trim()) return;
-    await fetch(`/api/collections/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: editName.trim() }) });
+    await fetch(`/api/collections/${id}`, {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: editName.trim() }),
+    });
     setCollections((prev) => prev.map((c) => (c.id === id ? { ...c, name: editName.trim() } : c)));
     setEditingCol(null);
   }
@@ -53,6 +83,13 @@ export default function SettingsPage() {
     if (!confirm(t("settings.list_delete_confirm"))) return;
     await fetch(`/api/collections/${id}`, { method: "DELETE" });
     setCollections((prev) => prev.filter((c) => c.id !== id));
+  }
+
+  async function deleteHealthData() {
+    if (!confirm("¿Borrar todos tus datos personales? Tus objetivos se conservan.")) return;
+    await fetch("/api/profile/health-data", { method: "DELETE" });
+    setProfile((p) => ({ ...p, age: null, weightKg: null, heightCm: null, activityLevel: null, biologicalSex: null, healthDataConsentAt: null }));
+    setConsent(false);
   }
 
   return (
@@ -72,6 +109,94 @@ export default function SettingsPage() {
       </section>
 
       <section className="mb-8">
+        <h2 className="mb-1 text-lg font-semibold">🎯 Mi objetivo</h2>
+        <p className="mb-3 text-xs text-zinc-500 dark:text-zinc-400">RecepIA te orienta con sugerencias generales. No es una herramienta médica. Si tienes una condición de salud, consulta a un profesional.</p>
+
+        <div className="mb-3 flex items-center gap-2">
+          <button
+            onClick={() => setProfile((p) => ({ ...p, goalsActive: !p.goalsActive }))}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${profile.goalsActive ? "bg-orange-500" : "bg-zinc-300 dark:bg-zinc-600"}`}
+          >
+            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${profile.goalsActive ? "translate-x-6" : "translate-x-1"}`} />
+          </button>
+          <span className="text-sm">{profile.goalsActive ? "Objetivos activos" : "Sin objetivo — modo antojo"}</span>
+        </div>
+
+        {profile.goalsActive && (
+          <div className="flex flex-wrap gap-2">
+            {GOAL_CATALOG.map((g) => {
+              const active = profile.goals.includes(g.id);
+              return (
+                <button key={g.id} onClick={() => toggleGoal(g.id)}
+                  className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${active ? "bg-orange-100 text-orange-700 ring-1 ring-orange-400 dark:bg-orange-900/40 dark:text-orange-300" : "bg-zinc-100 text-zinc-500 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400"}`}>
+                  {g.emoji} {g.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      <section className="mb-8">
+        <h2 className="mb-1 text-lg font-semibold">📊 Datos opcionales</h2>
+        <p className="mb-3 text-xs text-zinc-500 dark:text-zinc-400">Estos datos son opcionales. Si los compartes, las sugerencias se ajustan mejor. Sin ellos, tu objetivo funciona igual con valores generales.</p>
+
+        <label className="mb-3 flex items-start gap-2 text-xs text-zinc-600 dark:text-zinc-400">
+          <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)}
+            className="mt-0.5 accent-orange-500" />
+          <span>Acepto que RecepIA guarde estos datos (edad, peso, estatura, actividad) únicamente para personalizar mis sugerencias. Los datos se almacenan en mi base de datos, no se comparten con terceros ni se envían a los proveedores de IA, y puedo borrarlos en cualquier momento.</span>
+        </label>
+
+        <div className={`space-y-3 ${!consent ? "pointer-events-none opacity-50" : ""}`}>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">Edad</label>
+              <Input type="number" min={1} max={120} value={profile.age ?? ""} onChange={(e) => setProfile({ ...profile, age: e.target.value ? parseInt(e.target.value) : null })} />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">Peso (kg)</label>
+              <Input type="number" min={30} max={300} step="0.1" value={profile.weightKg ?? ""} onChange={(e) => setProfile({ ...profile, weightKg: e.target.value ? parseFloat(e.target.value) : null })} />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">Estatura (cm)</label>
+              <Input type="number" min={100} max={250} value={profile.heightCm ?? ""} onChange={(e) => setProfile({ ...profile, heightCm: e.target.value ? parseInt(e.target.value) : null })} />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">Actividad</label>
+              <select value={profile.activityLevel ?? ""} onChange={(e) => setProfile({ ...profile, activityLevel: e.target.value || null })}
+                className="w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-800 dark:bg-zinc-900">
+                <option value="">—</option>
+                <option value="sedentario">Sedentario</option>
+                <option value="ligero">Ligero</option>
+                <option value="moderado">Moderado</option>
+                <option value="activo">Activo</option>
+                <option value="muy_activo">Muy activo</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">Sexo biológico</label>
+            <select value={profile.biologicalSex ?? ""} onChange={(e) => setProfile({ ...profile, biologicalSex: e.target.value || null })}
+              className="w-40 rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-800 dark:bg-zinc-900">
+              <option value="">—</option>
+              <option value="m">Masculino</option>
+              <option value="f">Femenino</option>
+            </select>
+          </div>
+        </div>
+
+        {profile.healthDataConsentAt && (
+          <Button variant="outline" size="sm" onClick={deleteHealthData} className="mt-3 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30">
+            <Trash2 className="h-4 w-4 mr-1" /> Borrar mis datos personales
+          </Button>
+        )}
+      </section>
+
+      <Button onClick={saveProfile} className="mb-8 w-full">
+        {saved ? <><Check className="h-4 w-4" />{t("settings.saved")}</> : t("settings.save_profile")}
+      </Button>
+
+      <section className="mb-8">
         <h2 className="mb-4 text-lg font-semibold">{t("settings.profile")}</h2>
         <div className="space-y-4">
           <TagInput label={t("settings.allergies")} values={profile.allergies} onChange={(allergies) => setProfile({ ...profile, allergies })} placeholder={t("settings.allergies_placeholder")} />
@@ -84,7 +209,6 @@ export default function SettingsPage() {
             <Input type="number" min={1} max={20} value={profile.defaultServings} onChange={(e) => setProfile({ ...profile, defaultServings: parseInt(e.target.value, 10) || 2 })} className="w-24" />
           </div>
         </div>
-        <Button onClick={saveProfile} className="mt-4 w-full">{saved ? <><Check className="h-4 w-4" />{t("settings.saved")}</> : t("settings.save_profile")}</Button>
       </section>
 
       <section className="mb-8">

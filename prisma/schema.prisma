@@ -16,11 +16,17 @@ model Recipe {
   cookTimeMinutes Int?
   servings        Int?
   tags            String[]           @default([])
-  source          String             @default("ai")
+  source          String             @default("ai") // "ai" | "manual" | "imported"
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
   ingredients     RecipeIngredient[]
   collections     RecipeCollection[]
+  caloriesPerServing Int?
+  proteinG           Float?
+  carbsG             Float?
+  fatG               Float?
+  nutriBadges        String[]         @default([])
+  nutriAnalyzedAt    DateTime?
 }
 
 model Ingredient {
@@ -71,6 +77,14 @@ model UserProfile {
   equipment           String[] @default([])
   defaultServings     Int      @default(2)
   updatedAt           DateTime @updatedAt
+  goals               String[] @default([])
+  goalsActive         Boolean  @default(true)
+  age                 Int?
+  weightKg            Float?
+  heightCm            Float?
+  activityLevel       String?
+  biologicalSex       String?
+  healthDataConsentAt DateTime?
 }
 
 model GenerationDraft {

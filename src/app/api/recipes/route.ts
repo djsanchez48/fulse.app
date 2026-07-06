@@ -15,6 +15,9 @@ export async function POST(req: NextRequest) {
       ingredients,
       collectionIds,
       draftId,
+      source,
+      nutrition,
+      nutriBadges,
     } = body;
 
     if (!title || !steps || !ingredients) {
@@ -53,7 +56,13 @@ export async function POST(req: NextRequest) {
         cookTimeMinutes: cookTimeMinutes ?? null,
         servings: servings ?? null,
         tags: tags ?? [],
-        source: "ai",
+        source: source ?? "ai",
+        caloriesPerServing: nutrition?.caloriesPerServing ?? null,
+        proteinG: nutrition?.proteinG ?? null,
+        carbsG: nutrition?.carbsG ?? null,
+        fatG: nutrition?.fatG ?? null,
+        nutriBadges: nutriBadges ?? [],
+        nutriAnalyzedAt: nutrition ? new Date() : null,
         ingredients: {
           create: ingredientData,
         },

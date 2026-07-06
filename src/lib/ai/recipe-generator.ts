@@ -16,17 +16,25 @@ function buildSystemPrompt(
     lovedIngredients: string[];
     equipment: string[];
     defaultServings: number;
+    goals?: string[];
   },
   lang: "es" | "en" = "es",
 ) {
   const template = translations[lang]["ai.system_prompt"] as string;
-  return template
-    .replace("{allergies}", profile.allergies.join(", ") || "none")
-    .replace("{restrictions}", profile.restrictions.join(", ") || "none")
-    .replace("{dislikedIngredients}", profile.dislikedIngredients.join(", ") || "none")
-    .replace("{lovedIngredients}", profile.lovedIngredients.join(", ") || "none")
-    .replace("{equipment}", profile.equipment.join(", ") || "basic kitchen utensils")
+  let prompt = template
+    .replace("{allergies}", profile.allergies.join(", ") || "ninguna")
+    .replace("{restrictions}", profile.restrictions.join(", ") || "ninguna")
+    .replace("{dislikedIngredients}", profile.dislikedIngredients.join(", ") || "ninguno")
+    .replace("{lovedIngredients}", profile.lovedIngredients.join(", ") || "ninguno")
+    .replace("{equipment}", profile.equipment.join(", ") || "utensilios básicos")
     .replace("{defaultServings}", profile.defaultServings.toString());
+
+  if (profile.goals && profile.goals.length > 0) {
+    prompt += `\n\nObjetivo del usuario: ${profile.goals.join(", ")}. Orienta la receta hacia este objetivo SIN caer en restricción extrema: porciones razonables, nunca menos de ~350 kcal por comida principal, sin lenguaje de dieta ni culpa.`;
+  }
+
+  prompt += "\n\nIncluye en tu JSON un campo 'nutrition' con { caloriesPerServing, proteinG, carbsG, fatG } estimados por porción, y un campo 'nutriBadges' con etiquetas del catálogo: [\"alta_proteina\", \"ligera\", \"buena_fibra\", \"dulce\", \"contundente\", \"alta_fibra\", \"baja_azucar\", \"alto_sodio\"].";
+  return prompt;
 }
 
 async function validateAndRetry(
@@ -83,17 +91,19 @@ export async function generateRecipe(
     where: { id: "main" },
   });
 
+  const rawProfile = profile ?? {
+    allergies: [],
+    restrictions: [],
+    dislikedIngredients: [],
+    lovedIngredients: [],
+    equipment: [],
+    defaultServings: 2,
+  };
+
   const systemMessage = {
     role: "system" as const,
     content: buildSystemPrompt(
-      profile ?? {
-        allergies: [],
-        restrictions: [],
-        dislikedIngredients: [],
-        lovedIngredients: [],
-        equipment: [],
-        defaultServings: 2,
-      },
+      rawProfile,
     ),
   };
 

@@ -1,24 +1,46 @@
 "use client";
 
-import { Clock } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Clock, ChevronDown, ChevronUp } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n-context";
+import { computeMatch, matchLabel } from "@/lib/nutrition/match";
+import type { Goal } from "@/lib/nutrition/targets";
 import type { GeneratedRecipe } from "@/types/schemas";
 
 interface RecipeCardProps {
   recipe: GeneratedRecipe;
-  onSave: () => void;
+  onSave?: () => void;
   saving?: boolean;
+  goals?: Goal[];
 }
 
-export function RecipeCard({ recipe, onSave, saving }: RecipeCardProps) {
+export function RecipeCard({ recipe, onSave, saving, goals }: RecipeCardProps) {
   const { t } = useI18n();
   const totalTime = (recipe.prepTimeMinutes ?? 0) + (recipe.cookTimeMinutes ?? 0);
+  const [showNutrition, setShowNutrition] = useState(false);
+
+  const nutrition = (recipe as Record<string, unknown>).nutrition as { caloriesPerServing?: number; proteinG?: number; carbsG?: number; fatG?: number } | undefined;
+  const nutriBadges = (recipe as Record<string, unknown>).nutriBadges as string[] | undefined;
+
+  const match = goals && goals.length > 0 && nutrition
+    ? computeMatch(
+        { caloriesPerServing: nutrition.caloriesPerServing, proteinG: nutrition.proteinG, carbsG: nutrition.carbsG, fatG: nutrition.fatG, nutriBadges },
+        goals,
+        recipe.ingredients,
+      )
+    : null;
+  const ml = match ? matchLabel(match) : null;
 
   return (
     <Card className="overflow-hidden border-orange-200 dark:border-orange-800">
       <CardHeader className="pb-3">
+        {ml && (
+          <span className={`mb-2 inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${ml.className}`}>
+            {ml.emoji} {ml.label}
+          </span>
+        )}
         <div className="flex items-start justify-between gap-2">
           <h2 className="text-xl font-bold leading-tight">{recipe.title}</h2>
           {recipe.servings && (
@@ -34,6 +56,11 @@ export function RecipeCard({ recipe, onSave, saving }: RecipeCardProps) {
               <Clock className="h-3 w-3" /> {totalTime} {t("card.minutes")}
             </span>
           )}
+          {nutriBadges?.map((badge) => (
+            <span key={badge} className="rounded-full bg-blue-50 px-2 py-0.5 text-xs text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+              {badge.replace(/_/g, " ")}
+            </span>
+          ))}
           {recipe.tags?.slice(0, 3).map((tag) => (
             <span key={tag} className="rounded-full bg-orange-50 px-2 py-0.5 text-xs text-orange-600 dark:bg-orange-900/30 dark:text-orange-400">{tag}</span>
           ))}
@@ -65,6 +92,25 @@ export function RecipeCard({ recipe, onSave, saving }: RecipeCardProps) {
             ))}
           </ol>
         </div>
+
+        {nutrition && (
+          <div>
+            <button onClick={() => setShowNutrition(!showNutrition)} className="flex w-full items-center justify-between rounded-lg bg-zinc-50 px-3 py-2 text-sm font-medium hover:bg-zinc-100 dark:bg-zinc-800/50 dark:hover:bg-zinc-800">
+              Ver detalle nutricional
+              {showNutrition ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </button>
+            {showNutrition && (
+              <div className="mt-2 space-y-1 rounded-lg bg-zinc-50 px-3 py-2 text-xs dark:bg-zinc-800/50">
+                <div className="flex justify-between"><span>🔥 Calorías</span><span className="font-medium">{nutrition.caloriesPerServing} kcal</span></div>
+                <div className="flex justify-between"><span>🍗 Proteína</span><span className="font-medium">{nutrition.proteinG}g</span></div>
+                <div className="flex justify-between"><span>🍞 Carbohidratos</span><span className="font-medium">{nutrition.carbsG}g</span></div>
+                <div className="flex justify-between"><span>🧈 Grasas</span><span className="font-medium">{nutrition.fatG}g</span></div>
+                <p className="mt-2 text-zinc-400">Estimación generada por IA — valores aproximados. Esto no reemplaza el consejo de un médico o nutricionista.</p>
+              </div>
+            )}
+          </div>
+        )}
+
         {onSave && (
           <Button onClick={onSave} disabled={saving} className="w-full" variant="default">
             {saving ? t("card.saving") : t("card.save")}
