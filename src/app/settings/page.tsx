@@ -126,10 +126,11 @@ export default function SettingsPage() {
           <div className="flex flex-wrap gap-2">
             {GOAL_CATALOG.map((g) => {
               const active = profile.goals.includes(g.id);
+              const key = `goals.${g.id}` as const;
               return (
                 <button key={g.id} onClick={() => toggleGoal(g.id)}
                   className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${active ? "bg-orange-100 text-orange-700 ring-1 ring-orange-400 dark:bg-orange-900/40 dark:text-orange-300" : "bg-zinc-100 text-zinc-500 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400"}`}>
-                  {g.emoji} {g.label}
+                  {g.emoji} {t(key)}
                 </button>
               );
             })}

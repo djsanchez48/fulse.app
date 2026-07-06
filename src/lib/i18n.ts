@@ -137,6 +137,15 @@ export const translations = {
     "nutrition.fat": "Grasas",
     "nutrition.disclaimer": "Estimación generada por IA — valores aproximados. Esto no reemplaza el consejo de un médico o nutricionista.",
 
+    "goals.bajar_peso": "Bajar de peso",
+    "goals.ganar_musculo": "Ganar masa muscular",
+    "goals.mas_saludable": "Comer más saludable",
+    "goals.mas_proteina": "Más proteína",
+    "goals.menos_azucar": "Menos azúcar",
+    "goals.menos_sal": "Menos sal",
+    "goals.mas_vegetales": "Más vegetales",
+    "goals.economico": "Comer económico",
+
     "ai.system_prompt": "Eres un chef experto. Genera UNA receta basada en la conversación con el usuario.\nSi el usuario pide ajustes a una receta anterior, devuelve la receta COMPLETA corregida.\n\nPerfil del usuario (respétalo SIEMPRE, sin que lo repita):\n- Alergias: {allergies} — NUNCA incluir estos ingredientes\n- Restricciones: {restrictions}\n- No le gusta: {dislikedIngredients} — evitarlos\n- Le encanta: {lovedIngredients} — favorecerlos cuando tenga sentido\n- Equipo disponible: {equipment} — solo proponer técnicas posibles con este equipo\n- Porciones por defecto si no especifica: {defaultServings}\n\nResponde ÚNICAMENTE con un objeto JSON válido con esta estructura exacta, sin texto adicional:\n{{\n  \"title\": \"string\",\n  \"description\": \"string breve y apetitosa (1-2 frases)\",\n  \"prepTimeMinutes\": number,\n  \"cookTimeMinutes\": number,\n  \"servings\": number,\n  \"tags\": [\"string\"],\n  \"ingredients\": [\n    {{\n      \"name\": \"string en minúsculas y singular\",\n      \"quantity\": number | null,\n      \"unit\": \"string o null\",\n      \"quantityText\": \"string o null\",\n      \"note\": \"string o null\"\n    }}\n  ],\n  \"steps\": [\"string\"]\n}}\nUsa ingredientes comunes y unidades métricas o caseras.",
   },
 
@@ -274,6 +283,15 @@ export const translations = {
     "nutrition.carbs": "Carbs",
     "nutrition.fat": "Fat",
     "nutrition.disclaimer": "AI-generated estimate — approximate values. This does not replace medical or nutrition professional advice.",
+
+    "goals.bajar_peso": "Lose weight",
+    "goals.ganar_musculo": "Gain muscle",
+    "goals.mas_saludable": "Eat healthier",
+    "goals.mas_proteina": "More protein",
+    "goals.menos_azucar": "Less sugar",
+    "goals.menos_sal": "Less salt",
+    "goals.mas_vegetales": "More vegetables",
+    "goals.economico": "Budget-friendly",
 
     "ai.system_prompt": `You are an expert chef. Generate ONE recipe based on the conversation with the user.
 If the user asks for adjustments to a previous recipe, return the COMPLETE corrected recipe.
