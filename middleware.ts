@@ -13,14 +13,13 @@ const PUBLIC_PATHS = [
 function isPublic(pathname: string): boolean {
   if (PUBLIC_PATHS.includes(pathname)) return true;
   if (pathname.startsWith("/_next/")) return true;
-  if (pathname.startsWith("/icons/")) return true;
-  if (pathname.endsWith(".svg") || pathname.endsWith(".png") || pathname.endsWith(".ico")) return true;
+  if (pathname.startsWith("/icon-")) return true;
+  if (pathname.endsWith(".svg") || pathname.endsWith(".png") || pathname.endsWith(".ico") || pathname.endsWith(".woff2")) return true;
   return false;
 }
 
-export async function middleware(request: NextRequest) {
+export default async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-
   if (isPublic(pathname)) return NextResponse.next();
 
   const cookieName = getAuthCookie();
@@ -38,7 +37,3 @@ export async function middleware(request: NextRequest) {
   loginUrl.searchParams.set("next", pathname);
   return NextResponse.redirect(loginUrl);
 }
-
-export const config = {
-  matcher: ["/((?!_next/static|_next/image).*)"],
-};
