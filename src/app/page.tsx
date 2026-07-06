@@ -7,6 +7,8 @@ import { RecipeCard } from "@/components/recipes/RecipeCard";
 import { CollectionSheet } from "@/components/recipes/CollectionSheet";
 import { DraftCard } from "@/components/recipes/DraftCard";
 import { InlineRecipeEditor } from "@/components/recipes/InlineRecipeEditor";
+import { getSmartSuggestions } from "@/lib/suggestions";
+import type { Goal } from "@/lib/nutrition/targets";
 import { useI18n } from "@/lib/i18n-context";
 import type { GeneratedRecipe, ParsedRecipeResult } from "@/types/schemas";
 
@@ -36,16 +38,15 @@ export default function Home() {
   const [ocrLoading, setOcrLoading] = useState(false);
   const [editing, setEditing] = useState(false);
   const [profileHint, setProfileHint] = useState<{ type: string; value: string } | null>(null);
+  const [quickPrompts, setQuickPrompts] = useState<string[]>([
+    t("create.chip_quick_chicken"), t("create.chip_pasta"), t("create.chip_salad"),
+    t("create.chip_breakfast"), t("create.chip_soup"), t("create.chip_dessert"),
+  ]);
 
   const [drafts, setDrafts] = useState<DraftItem[]>([]);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-
-  const quickPrompts = [
-    t("create.chip_quick_chicken"), t("create.chip_pasta"), t("create.chip_salad"),
-    t("create.chip_breakfast"), t("create.chip_soup"), t("create.chip_dessert"),
-  ];
 
   const loadDrafts = useCallback(async () => {
     const res = await fetch("/api/drafts");
@@ -53,6 +54,13 @@ export default function Home() {
   }, []);
 
   useEffect(() => { loadDrafts(); }, [loadDrafts]);
+  useEffect(() => {
+    fetch("/api/profile").then(r => r.json()).then(p => {
+      const goals = (p.goals ?? []) as Goal[];
+      const smart = getSmartSuggestions(goals);
+      if (smart.length > 0) setQuickPrompts(smart);
+    });
+  }, [t]);
 
   async function handleGenerate(e?: React.FormEvent) {
     if (e) e.preventDefault();
