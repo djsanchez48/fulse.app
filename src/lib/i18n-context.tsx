@@ -30,9 +30,11 @@ const translations = {
     "create.recent": "Recientes",
     "create.saved": "¡Receta guardada!",
     "create.error": "Error al generar la receta",
+    "create.edit_save": "Guardar cambios",
 
     "card.save": "Guardar en...",
     "card.saving": "Guardando...",
+    "card.edit": "Editar",
     "card.ingredients": "Ingredientes",
     "card.preparation": "Preparación",
     "card.minutes": "min",
@@ -133,6 +135,7 @@ const translations = {
     "import.scan_photo": "Escanear foto de receta",
     "import.scanning_photo": "Escaneando foto...",
     "import.ocr_hint": "Toma una foto de una receta impresa y la IA la reconocerá.",
+    "import.edit": "Editar",
 
     "nutrition.view": "Ver detalle nutricional",
     "nutrition.calories": "Calorías",
@@ -178,9 +181,11 @@ const translations = {
     "create.recent": "Recent",
     "create.saved": "Recipe saved!",
     "create.error": "Error generating recipe",
+    "create.edit_save": "Save changes",
 
     "card.save": "Save to...",
     "card.saving": "Saving...",
+    "card.edit": "Edit",
     "card.ingredients": "Ingredients",
     "card.preparation": "Preparation",
     "card.minutes": "min",
@@ -281,6 +286,7 @@ const translations = {
     "import.scan_photo": "Scan recipe photo",
     "import.scanning_photo": "Scanning photo...",
     "import.ocr_hint": "Take a photo of a printed recipe and AI will recognize it.",
+    "import.edit": "Edit",
 
     "nutrition.view": "View nutrition details",
     "nutrition.calories": "Calories",

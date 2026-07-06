@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { RecipeCard } from "@/components/recipes/RecipeCard";
 import { CollectionSheet } from "@/components/recipes/CollectionSheet";
 import { DraftCard } from "@/components/recipes/DraftCard";
+import { InlineRecipeEditor } from "@/components/recipes/InlineRecipeEditor";
 import { useI18n } from "@/lib/i18n-context";
 import type { GeneratedRecipe, ParsedRecipeResult } from "@/types/schemas";
 
@@ -33,6 +34,7 @@ export default function Home() {
   const [parseResult, setParseResult] = useState<ParsedRecipeResult | null>(null);
   const [source, setSource] = useState<"ai" | "imported">("ai");
   const [ocrLoading, setOcrLoading] = useState(false);
+  const [editing, setEditing] = useState(false);
 
   const [drafts, setDrafts] = useState<DraftItem[]>([]);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -258,12 +260,29 @@ export default function Home() {
           )}
 
           {source === "imported" && (
-            <span className="inline-block rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
-              {t("import.badge")}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="inline-block rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+                {t("import.badge")}
+              </span>
+              <button
+                onClick={() => setEditing(!editing)}
+                className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700"
+              >
+                {editing ? "Cancelar" : t("import.edit")}
+              </button>
+            </div>
           )}
 
-          <RecipeCard recipe={recipe} onSave={() => setSheetOpen(true)} saving={saving} />
+          {editing && recipe ? (
+            <InlineRecipeEditor
+              recipe={recipe}
+              onSave={(edited) => { setRecipe(edited); setEditing(false); }}
+              onCancel={() => setEditing(false)}
+              t={t}
+            />
+          ) : (
+            <RecipeCard recipe={recipe} onSave={() => setSheetOpen(true)} saving={saving} />
+          )}
 
           {saved && <p className="text-center text-sm text-green-600 dark:text-green-400">{t("create.saved")}</p>}
 
