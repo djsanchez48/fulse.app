@@ -38,6 +38,7 @@ export async function PUT(req: NextRequest) {
       allergies, restrictions, dislikedIngredients, lovedIngredients,
       equipment, defaultServings, goals, goalsActive,
       age, weightKg, heightCm, activityLevel, biologicalSex, healthDataConsent,
+      onboardingCompletedAt, rejectedHints,
     } = body;
 
     const existing = await prisma.userProfile.findUnique({ where: { id: "main" } });
@@ -69,6 +70,8 @@ export async function PUT(req: NextRequest) {
         ...(biologicalSex !== undefined && { biologicalSex }),
         ...(healthDataConsent === true && !existing?.healthDataConsentAt
           ? { healthDataConsentAt: new Date() } : {}),
+        ...(onboardingCompletedAt !== undefined && { onboardingCompletedAt: new Date(onboardingCompletedAt as string) }),
+        ...(rejectedHints !== undefined && { rejectedHints }),
       },
       create: {
         id: "main",
@@ -80,6 +83,7 @@ export async function PUT(req: NextRequest) {
         defaultServings: defaultServings ?? 2,
         goals: (goals ?? []).slice(0, 2),
         goalsActive: goalsActive ?? true,
+        rejectedHints: rejectedHints ?? [],
       },
     });
 
