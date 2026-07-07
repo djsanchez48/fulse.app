@@ -9,18 +9,47 @@ import { useI18n } from "@/lib/i18n-context";
 import type { GeneratedRecipe } from "@/types/schemas";
 
 async function fileToJpeg(file: File): Promise<string> {
+  const supported = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+  if (supported.includes(file.type)) {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.readAsDataURL(file);
+    });
+  }
+
   return new Promise((resolve) => {
     const reader = new FileReader();
     reader.onload = () => {
       const img = new Image();
+      let resolved = false;
+
       img.onload = () => {
+        if (resolved) return;
+        resolved = true;
         const canvas = document.createElement("canvas");
-        canvas.width = Math.min(img.width, 2000);
-        canvas.height = Math.min(img.height, 2000);
+        const maxW = Math.min(img.width, 2000);
+        const maxH = Math.min(img.height, 2000);
+        canvas.width = maxW;
+        canvas.height = maxH;
         const ctx = canvas.getContext("2d")!;
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, maxW, maxH);
         resolve(canvas.toDataURL("image/jpeg", 0.85));
       };
+
+      img.onerror = () => {
+        if (resolved) return;
+        resolved = true;
+        resolve(reader.result as string);
+      };
+
+      setTimeout(() => {
+        if (!resolved) {
+          resolved = true;
+          resolve(reader.result as string);
+        }
+      }, 5000);
+
       img.src = reader.result as string;
     };
     reader.readAsDataURL(file);
