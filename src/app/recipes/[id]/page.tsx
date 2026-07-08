@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, use } from "react";
 import { useRouter } from "next/navigation";
-import { Clock, Minus, Plus, Trash2 } from "lucide-react";
+import { Clock, Minus, Plus, Trash2, ChefHat } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CollectionSheet } from "@/components/recipes/CollectionSheet";
 import { useI18n } from "@/lib/i18n-context";
@@ -18,6 +18,7 @@ interface RecipeDetail {
   prepTimeMinutes: number | null; cookTimeMinutes: number | null;
   servings: number | null; tags: string[]; ingredients: IngredientDetail[];
   collections: { collection: { id: string; name: string; emoji: string | null } }[];
+  cookedCount: number; lastCookedAt: string | null;
 }
 
 export default function RecipeDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -31,10 +32,12 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
   const [checked, setChecked] = useState<Set<string>>(new Set());
   const [sheetOpen, setSheetOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [cooking, setCooking] = useState(false);
+  const [cookCount, setCookCount] = useState(0);
 
   useEffect(() => {
     fetch(`/api/recipes/${id}`).then((r) => r.json()).then((data) => {
-      setRecipe(data); setServings(data.servings ?? 2); setLoading(false);
+      setRecipe(data); setServings(data.servings ?? 2); setCookCount(data.cookedCount ?? 0); setLoading(false);
     });
   }, [id]);
 
@@ -75,6 +78,17 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
     router.push("/recipes");
   }
 
+  async function handleCook() {
+    if (!recipe) return;
+    setCooking(true);
+    const res = await fetch(`/api/recipes/${recipe.id}/cook`, { method: "POST" });
+    if (res.ok) {
+      const data = await res.json();
+      setCookCount(data.cookedCount);
+    }
+    setCooking(false);
+  }
+
   if (loading) return <div className="mx-auto max-w-xl px-4 py-6 pb-24"><div className="space-y-3">{[1, 2, 3, 4].map((i) => <div key={i} className="h-20 animate-pulse rounded-xl bg-zinc-100 dark:bg-zinc-800" />)}</div></div>;
   if (!recipe) return <div className="mx-auto max-w-xl px-4 py-6 pb-24 text-center"><p className="text-zinc-500">{t("detail.not_found")}</p></div>;
 
@@ -91,11 +105,19 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
       </div>
 
       {recipe.servings && (
-        <div className="mt-6 flex items-center justify-center gap-4">
-          <button onClick={() => setServings((s) => Math.max(1, s - 1))} disabled={servings <= 1} className="rounded-full border border-zinc-300 p-2 disabled:opacity-30 hover:bg-zinc-100 dark:border-zinc-600 dark:hover:bg-zinc-800"><Minus className="h-4 w-4" /></button>
-          <span className="text-lg font-semibold tabular-nums">{servings} {servings === 1 ? t("detail.portion") : t("detail.portions")}</span>
-          <button onClick={() => setServings((s) => s + 1)} className="rounded-full border border-zinc-300 p-2 hover:bg-zinc-100 dark:border-zinc-600 dark:hover:bg-zinc-800"><Plus className="h-4 w-4" /></button>
-        </div>
+        <>
+          <div className="mt-6 flex items-center justify-center gap-4">
+            <button onClick={() => setServings((s) => Math.max(1, s - 1))} disabled={servings <= 1} className="rounded-full border border-zinc-300 p-2 disabled:opacity-30 hover:bg-zinc-100 dark:border-zinc-600 dark:hover:bg-zinc-800"><Minus className="h-4 w-4" /></button>
+            <span className="text-lg font-semibold tabular-nums">{servings} {servings === 1 ? t("detail.portion") : t("detail.portions")}</span>
+            <button onClick={() => setServings((s) => s + 1)} className="rounded-full border border-zinc-300 p-2 hover:bg-zinc-100 dark:border-zinc-600 dark:hover:bg-zinc-800"><Plus className="h-4 w-4" /></button>
+          </div>
+          <div className="mt-4 flex justify-center">
+            <Button variant="outline" size="sm" onClick={handleCook} disabled={cooking} className="gap-1.5">
+              <ChefHat className="h-4 w-4" />
+              {t("recipe.cooked_this")}{cookCount > 0 ? ` (${cookCount})` : ""}
+            </Button>
+          </div>
+        </>
       )}
 
       <div className="mt-6">
