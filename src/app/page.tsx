@@ -83,10 +83,15 @@ export default function Home() {
       setMessages(newMessages); setAdjustment(""); setPrompt(""); setSaved(false);
       if (data.profileHints?.[0]) {
         const hint = data.profileHints[0];
-        fetch(`/api/profile`).then(r => r.json()).then(p => {
-          const rejected = p.rejectedHints ?? [];
-          if (!rejected.includes(`${hint.type}:${hint.value}`)) setProfileHint(hint);
-        });
+        const evidence = (hint.evidence ?? "").toLowerCase();
+        if (hint.type === "possible_allergy" && !/(alerg|no puedo|me hace mal|intoleran|me cae mal)/i.test(evidence)) {
+          // Skip allergy hints that the user didn't explicitly mention
+        } else {
+          fetch(`/api/profile`).then(r => r.json()).then(p => {
+            const rejected = p.rejectedHints ?? [];
+            if (!rejected.includes(`${hint.type}:${hint.value}`)) setProfileHint(hint);
+          });
+        }
       }
       loadDrafts();
     } catch (err) {
