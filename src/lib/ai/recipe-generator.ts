@@ -8,6 +8,61 @@ const deepseek = new OpenAI({
   baseURL: process.env.DEEPSEEK_BASE_URL ?? "https://api.deepseek.com/v1",
 });
 
+interface MemoryProfileData {
+  ingredients?: Record<string, { score: number; count: number }>;
+  tags?: Record<string, { score: number; count: number }>;
+  badges?: Record<string, { score: number; count: number }>;
+}
+
+function buildMemoryBlock(memoryProfile: MemoryProfileData | undefined, lang: "es" | "en" = "es"): string {
+  if (!memoryProfile) return "";
+
+  const topIngredients = Object.entries(memoryProfile.ingredients ?? {})
+    .filter(([, d]) => d.score > 0 && d.count >= 2)
+    .sort((a, b) => b[1].score - a[1].score)
+    .slice(0, 5)
+    .map(([name, d]) => `${name} (${d.count} recetas)`);
+
+  const topStyles = [
+    ...Object.entries(memoryProfile.tags ?? {}),
+    ...Object.entries(memoryProfile.badges ?? {}),
+  ]
+    .filter(([, d]) => d.score > 0 && d.count >= 2)
+    .sort((a, b) => b[1].score - a[1].score)
+    .slice(0, 3)
+    .map(([name]) => name);
+
+  if (topIngredients.length === 0 && topStyles.length === 0) return "";
+
+  const parts: string[] = [];
+
+  if (topIngredients.length > 0) {
+    parts.push(
+      lang === "es"
+        ? `Ingredientes que más usás: ${topIngredients.join(", ")}.`
+        : `Most used ingredients: ${topIngredients.join(", ")}.`,
+    );
+  }
+
+  if (topStyles.length > 0) {
+    parts.push(
+      lang === "es"
+        ? `Estilos y preferencias frecuentes: ${topStyles.join(", ")}.`
+        : `Frequent styles and preferences: ${topStyles.join(", ")}.`,
+    );
+  }
+
+  const guidance = lang === "es"
+    ? "\nUsá esta información para orientar las recetas, pero no la trates como una restricción obligatoria."
+    : "\nUse this information to guide recipes, but do not treat it as a mandatory restriction.";
+
+  const header = lang === "es"
+    ? "\n\nSegún tu historial en Fulse, estos son tus ingredientes y estilos más frecuentes (orientativo, no restrictivo):"
+    : "\n\nBased on your Fulse history, these are your most frequent ingredients and styles (advisory, not restrictive):";
+
+  return `${header}\n${parts.join("\n")}${guidance}`;
+}
+
 function buildSystemPrompt(
   profile: {
     allergies: string[];
@@ -17,6 +72,7 @@ function buildSystemPrompt(
     equipment: string[];
     defaultServings: number;
     goals?: string[];
+    memoryProfile?: MemoryProfileData;
   },
   lang: "es" | "en" = "es",
 ) {
@@ -32,6 +88,8 @@ function buildSystemPrompt(
   if (profile.goals && profile.goals.length > 0) {
     prompt += `\n\nObjetivo del usuario: ${profile.goals.join(", ")}. Orienta la receta hacia este objetivo SIN caer en restricción extrema: porciones razonables, nunca menos de ~350 kcal por comida principal, sin lenguaje de dieta ni culpa.`;
   }
+
+  prompt += buildMemoryBlock(profile.memoryProfile, lang);
 
   prompt += "\n\nIncluye en tu JSON un campo 'nutrition' con { caloriesPerServing, proteinG, carbsG, fatG } estimados por porción, y un campo 'nutriBadges' con etiquetas del catálogo: [\"alta_proteina\", \"ligera\", \"buena_fibra\", \"dulce\", \"contundente\", \"alta_fibra\", \"baja_azucar\", \"alto_sodio\"].";
 
@@ -103,10 +161,14 @@ export async function generateRecipe(
     defaultServings: 2,
   };
 
+  const memoryProfile = profile?.memoryEnabled
+    ? (profile.memoryProfile as MemoryProfileData | undefined)
+    : undefined;
+
   const systemMessage = {
     role: "system" as const,
     content: buildSystemPrompt(
-      rawProfile,
+      { ...rawProfile, memoryProfile },
     ),
   };
 
