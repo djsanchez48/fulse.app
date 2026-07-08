@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Edit2, Trash2, Check, X, Globe, Target, LogOut } from "lucide-react";
+import { Edit2, Trash2, Check, X, Globe, Target, LogOut, Brain, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { TagInput } from "@/components/ui/TagInput";
@@ -240,6 +240,19 @@ export default function SettingsPage() {
       <Button onClick={saveProfile} className="mb-8 w-full">
         {saved ? <><Check className="h-4 w-4" />{t("settings.saved")}</> : t("settings.save_profile")}
       </Button>
+
+      <section className="mb-8">
+        <a href="/memoria" className="flex items-center justify-between rounded-xl bg-orange-50 p-4 hover:bg-orange-100 transition-colors dark:bg-orange-900/20 dark:hover:bg-orange-900/30">
+          <div className="flex items-center gap-3">
+            <Brain className="h-5 w-5 text-orange-500" />
+            <div>
+              <p className="text-sm font-medium">{t("memory.title")}</p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">{t("memory.description")}</p>
+            </div>
+          </div>
+          <ArrowRight className="h-4 w-4 text-zinc-400" />
+        </a>
+      </section>
 
       <section className="mb-8">
         <h2 className="mb-4 text-lg font-semibold">{t("settings.lists")}</h2>
