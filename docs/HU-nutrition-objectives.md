@@ -6,6 +6,18 @@ Que el usuario pueda definir en Ajustes qué quiere lograr con su alimentación 
 
 **Prerequisito:** Fase 1 implementada. Compatible con la funcionalidad de Importar receta si ya existe.
 
+## Estado: Implementado ✅ (con una desviación de spec)
+
+Validado contra código (2026-09-13): `goals`/`goalsActive`/`activityLevel`/`healthDataConsentAt` y
+los campos nutricionales de `Recipe` (`caloriesPerServing`, `nutriBadges`, etc.) están en
+`prisma/schema.prisma`; `src/lib/nutrition/targets.ts` y `match.ts` existen; rutas `/api/profile` y
+`/api/recipes/[id]/analyze` existen. Commit principal: `36020da`.
+
+**Desviación:** el spec pedía "hasta 2 objetivos combinables", pero `src/app/settings/page.tsx`
+implementa **un objetivo principal (single-select)** + una sección separada de "Ajustes" apilables
+— cambio introducido en el commit `0002197` ("single-select goal, autosave, reorganized sections").
+No es un bug, es un rediseño posterior; dejarlo anotado por si el spec necesita actualizarse.
+
 ## Principios de diseño (CRÍTICOS)
 
 1. **Es una guía, no una prescripción.** La app sugiere y etiqueta; nunca prohíbe, sermonea ni prescribe. El disclaimer es parte del producto.

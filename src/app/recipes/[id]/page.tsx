@@ -2,10 +2,12 @@
 
 import { useState, useEffect, useCallback, use } from "react";
 import { useRouter } from "next/navigation";
-import { Clock, Minus, Plus, Trash2, ChefHat } from "lucide-react";
+import { Clock, Minus, Plus, Trash2, ChefHat, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CollectionSheet } from "@/components/recipes/CollectionSheet";
+import { InlineRecipeEditor } from "@/components/recipes/InlineRecipeEditor";
 import { useI18n } from "@/lib/i18n-context";
+import type { GeneratedRecipe } from "@/types/schemas";
 
 interface IngredientDetail {
   ingredientId: string; quantity: number | null; unit: string | null;
@@ -34,6 +36,8 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
   const [deleting, setDeleting] = useState(false);
   const [cooking, setCooking] = useState(false);
   const [cookCount, setCookCount] = useState(0);
+  const [editing, setEditing] = useState(false);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "error">("idle");
 
   useEffect(() => {
     fetch(`/api/recipes/${id}`).then((r) => r.json()).then((data) => {
@@ -78,6 +82,55 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
     router.push("/recipes");
   }
 
+  function toEditable(r: RecipeDetail): GeneratedRecipe {
+    return {
+      title: r.title,
+      description: r.description ?? "",
+      prepTimeMinutes: r.prepTimeMinutes ?? 0,
+      cookTimeMinutes: r.cookTimeMinutes ?? 0,
+      servings: r.servings ?? 2,
+      tags: r.tags ?? [],
+      steps: r.steps,
+      ingredients: r.ingredients.map((ri) => ({
+        name: ri.ingredient.name,
+        quantity: ri.quantity,
+        unit: ri.unit,
+        quantityText: ri.quantityText,
+        note: ri.note,
+      })),
+    };
+  }
+
+  async function handleEditSave(edited: GeneratedRecipe) {
+    setSaveState("saving");
+    const res = await fetch(`/api/recipes/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: edited.title,
+        description: edited.description || null,
+        steps: edited.steps,
+        prepTimeMinutes: edited.prepTimeMinutes,
+        cookTimeMinutes: edited.cookTimeMinutes,
+        servings: edited.servings,
+        tags: edited.tags,
+        ingredients: edited.ingredients,
+      }),
+    });
+
+    if (!res.ok) {
+      setSaveState("error");
+      return;
+    }
+
+    const updated: RecipeDetail = await res.json();
+    setRecipe(updated);
+    setServings(updated.servings ?? 2);
+    setChecked(new Set());
+    setEditing(false);
+    setSaveState("idle");
+  }
+
   async function handleCook() {
     if (!recipe) return;
     setCooking(true);
@@ -93,6 +146,22 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
   if (!recipe) return <div className="mx-auto max-w-xl px-4 py-6 pb-24 text-center"><p className="text-zinc-500">{t("detail.not_found")}</p></div>;
 
   const totalTime = (recipe.prepTimeMinutes ?? 0) + (recipe.cookTimeMinutes ?? 0);
+
+  if (editing) {
+    return (
+      <div className="mx-auto max-w-xl px-4 py-6 pb-24">
+        <InlineRecipeEditor
+          recipe={toEditable(recipe)}
+          onSave={handleEditSave}
+          onCancel={() => { setEditing(false); setSaveState("idle"); }}
+          t={t}
+        />
+        <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">{t("edit.nutrition_reset")}</p>
+        {saveState === "saving" && <p className="mt-2 text-xs text-zinc-400">{t("edit.saving")}</p>}
+        {saveState === "error" && <p className="mt-2 text-xs text-red-500">{t("edit.error")}</p>}
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-xl px-4 py-6 pb-24">
@@ -154,6 +223,9 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
 
       <div className="mt-8 flex gap-3">
         <Button onClick={() => setSheetOpen(true)} className="flex-1">{t("detail.save")}</Button>
+        <Button variant="outline" onClick={() => setEditing(true)} className="gap-1.5">
+          <Pencil className="h-4 w-4" /> {t("detail.edit")}
+        </Button>
         <Button variant="outline" onClick={() => { if (confirm(t("detail.delete_confirm"))) handleDelete(); }} disabled={deleting}><Trash2 className="h-4 w-4" /></Button>
       </div>
 

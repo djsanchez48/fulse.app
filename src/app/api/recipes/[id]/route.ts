@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { extractEventPayloads, trackEvents } from "@/lib/insights/track";
+import { invalidatesNutrition, normalizeIngredientName, validateIngredients } from "@/lib/recipes/edit";
 
 export async function GET(
   _req: NextRequest,
@@ -41,7 +42,7 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await req.json();
-    const { title, description, steps, prepTimeMinutes, cookTimeMinutes, servings, tags, collectionIds } = body;
+    const { title, description, steps, prepTimeMinutes, cookTimeMinutes, servings, tags, collectionIds, ingredients } = body;
 
     const existing = await prisma.recipe.findUnique({
       where: { id },
@@ -52,6 +53,44 @@ export async function PATCH(
         { error: "Receta no encontrada" },
         { status: 404 },
       );
+    }
+
+    if (title !== undefined && (typeof title !== "string" || !title.trim())) {
+      return NextResponse.json({ error: "El título no puede quedar vacío" }, { status: 400 });
+    }
+    if (steps !== undefined && (!Array.isArray(steps) || steps.some((s) => typeof s !== "string"))) {
+      return NextResponse.json({ error: "Los pasos deben ser una lista de texto" }, { status: 400 });
+    }
+
+    if (ingredients !== undefined) {
+      const validation = validateIngredients(ingredients);
+      if (!validation.ok) {
+        return NextResponse.json({ error: validation.error }, { status: 400 });
+      }
+
+      const ingredientData = await Promise.all(
+        validation.value.map(async (ing) => {
+          const ingredient = await prisma.ingredient.upsert({
+            where: { name: normalizeIngredientName(ing.name) },
+            update: {},
+            create: { name: normalizeIngredientName(ing.name) },
+          });
+          return {
+            ingredientId: ingredient.id,
+            quantity: ing.quantity,
+            unit: ing.unit,
+            quantityText: ing.quantityText,
+            note: ing.note,
+          };
+        }),
+      );
+
+      await prisma.recipeIngredient.deleteMany({ where: { recipeId: id } });
+      if (ingredientData.length > 0) {
+        await prisma.recipeIngredient.createMany({
+          data: ingredientData.map((data) => ({ recipeId: id, ...data })),
+        });
+      }
     }
 
     if (collectionIds !== undefined) {
@@ -97,6 +136,9 @@ export async function PATCH(
         ...(cookTimeMinutes !== undefined && { cookTimeMinutes }),
         ...(servings !== undefined && { servings }),
         ...(tags !== undefined && { tags }),
+        ...(invalidatesNutrition({ ingredients, servings }, { servings: existing.servings }) && {
+          nutriAnalyzedAt: null,
+        }),
       },
       include: {
         ingredients: { include: { ingredient: true } },

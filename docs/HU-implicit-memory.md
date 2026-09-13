@@ -1,6 +1,10 @@
 # Fulse — Plan: Memoria de preferencias implícitas
 
-**Estado: Planificado 📋**
+**Estado: Implementado ✅**
+
+Validado contra código (2026-09-13): existe la ruta `/memoria` y la sección "Mi Memoria" en Ajustes
+(`src/app/settings/page.tsx`). Commits `ee86b93` (schema, event tracking, i18n) y `270c85a`
+(knowledge profile: import context doc, inject en prompt, editable en `/memoria`).
 
 ## Objetivo
 

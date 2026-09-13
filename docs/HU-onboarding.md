@@ -13,4 +13,10 @@ Primera receta en <90s, perfil construido dentro de la experiencia (no en un for
 - `rejectedHints String[] @default([])`
 - `nudgeState Json @default("{}")`
 
-## Estado: Pendiente
+## Estado: Implementado ✅
+
+Validado contra código (2026-09-13): existe `/bienvenida` (167 líneas), `src/lib/nutrition/nudges.ts`
+implementa el motor de nudges, y `onboardingCompletedAt` / `rejectedHints` / `nudgeState` están en
+`prisma/schema.prisma`. Las 3 capas del plan están cubiertas — commits `5c974b0` (bienvenida +
+AuthGuard + indicador de perfil), `bf67a65` (capas 2-3: hints + nudges), `db4ad90` y `0f60d4a`
+(fixes posteriores).
