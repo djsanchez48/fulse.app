@@ -1,4 +1,4 @@
-const CACHE_NAME = "fulse-v1";
+const CACHE_NAME = "fulse-v2";
 
 const PRECACHE_URLS = [
   "/",
@@ -6,8 +6,13 @@ const PRECACHE_URLS = [
 ];
 
 self.addEventListener("install", (event) => {
+  // Una por una y tolerando fallos: addAll rechaza entero si alguna URL redirige
+  // —"/" lo hace cuando no hay sesion— y eso aborta la instalacion del SW,
+  // dejando el cache vacio.
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_URLS))
+    caches.open(CACHE_NAME).then((cache) =>
+      Promise.all(PRECACHE_URLS.map((url) => cache.add(url).catch(() => {})))
+    )
   );
   self.skipWaiting();
 });

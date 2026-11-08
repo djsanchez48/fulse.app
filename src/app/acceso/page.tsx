@@ -1,25 +1,21 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Lock, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 function AccesoForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") ?? "/";
+  // Solo rutas internas: `next` termina en location.assign, asi que una URL
+  // externa o `javascript:` seria un open redirect.
+  const rawNext = searchParams.get("next") ?? "/";
+  const next = /^\/(?!\/)/.test(rawNext) ? rawNext : "/";
 
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (next.startsWith("http") || next.startsWith("//")) {
-      router.replace("/");
-    }
-  }, [next, router]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -31,10 +27,22 @@ function AccesoForm() {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password }),
       });
-      if (res.ok) { router.replace(next); }
-      else { const data = await res.json(); setError(data.error ?? "Contraseña incorrecta"); }
-    } catch { setError("Error de conexión"); }
-    finally { setLoading(false); }
+      if (res.ok) {
+        // Navegacion dura a proposito: router.replace reusa el Client Cache, que
+        // puede tener la respuesta de antes de la cookie (el middleware mandando
+        // de vuelta a /acceso) y deja la pantalla pegada. Recargar garantiza que
+        // el middleware corra de nuevo con la sesion ya puesta.
+        // Sin setLoading(false): seguimos navegando, el spinner debe quedarse.
+        window.location.assign(next);
+        return;
+      }
+      const data = await res.json();
+      setError(data.error ?? "Contraseña incorrecta");
+      setLoading(false);
+    } catch {
+      setError("Error de conexión");
+      setLoading(false);
+    }
   }
 
   return (
