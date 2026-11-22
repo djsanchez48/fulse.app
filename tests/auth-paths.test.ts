@@ -2,9 +2,22 @@ import { describe, it, expect } from "vitest";
 import { isPublicPath } from "@/lib/auth-paths";
 
 describe("isPublicPath — rutas que deben ser públicas", () => {
-  it("deja pasar el login y sus dependencias", () => {
+  it("deja pasar la pantalla de acceso", () => {
     expect(isPublicPath("/acceso")).toBe(true);
-    expect(isPublicPath("/api/auth/login")).toBe(true);
+  });
+
+  it("deja pasar los endpoints de Auth.js (si no, el login se bloquea a sí mismo)", () => {
+    for (const p of [
+      "/api/auth/signin",
+      "/api/auth/signin/google",
+      "/api/auth/callback/google",
+      "/api/auth/session",
+      "/api/auth/csrf",
+      "/api/auth/signout",
+      "/api/auth/providers",
+    ]) {
+      expect(isPublicPath(p), p).toBe(true);
+    }
   });
 
   it("deja pasar lo que necesita la PWA", () => {
@@ -47,9 +60,14 @@ describe("isPublicPath — rutas protegidas", () => {
     }
   });
 
-  it("exige sesión en toda la API salvo el login", () => {
-    for (const p of ["/api/recipes", "/api/drafts", "/api/profile", "/api/ai/vision", "/api/auth/logout"]) {
+  it("exige sesión en toda la API salvo el prefijo de Auth.js", () => {
+    for (const p of ["/api/recipes", "/api/drafts", "/api/profile", "/api/ai/vision", "/api/ai/ocr-recipe"]) {
       expect(isPublicPath(p), p).toBe(false);
     }
+  });
+
+  it("no confunde una ruta que solo empieza parecido a /api/auth", () => {
+    expect(isPublicPath("/api/authorize")).toBe(false);
+    expect(isPublicPath("/api/auth-bypass")).toBe(false);
   });
 });

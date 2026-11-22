@@ -1,7 +1,6 @@
 /** Rutas que se sirven sin sesion. Todo lo demas exige la cookie. */
 export const PUBLIC_PATHS = [
   "/acceso",
-  "/api/auth/login",
   "/manifest.json",
   "/sw.js",
   "/favicon.ico",
@@ -17,6 +16,10 @@ const ROOT_STATIC_FILE = /^\/[^/]+\.(svg|png|ico|woff2|webmanifest)$/;
 export function isPublicPath(pathname: string): boolean {
   if (PUBLIC_PATHS.includes(pathname)) return true;
   if (pathname.startsWith("/_next/")) return true;
+  // Endpoints propios de Auth.js (signin, callback, session, csrf, signout).
+  // Tienen que ser publicos o se bloquearia el login a si mismo; su seguridad
+  // la maneja Auth.js, y quien decide si entras es la allowlist del callback.
+  if (pathname === "/api/auth" || pathname.startsWith("/api/auth/")) return true;
   if (ROOT_STATIC_FILE.test(pathname)) return true;
   return false;
 }

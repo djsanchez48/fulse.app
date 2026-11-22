@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { signOut } from "next-auth/react";
 import { Check, X, Globe, LogOut, Brain, ArrowRight, ChevronRight, Minus, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -277,10 +278,8 @@ export default function SettingsPage() {
           <span className="text-xs text-orange-500 font-medium cursor-pointer">Ver planes →</span>
         </div>
 
-        <Button variant="outline" size="sm" onClick={async () => {
-          await fetch("/api/auth/logout", { method: "POST" });
-          window.location.href = "/acceso";
-        }} className="w-full text-zinc-400 border-zinc-200 dark:border-zinc-700">
+        <Button variant="outline" size="sm" onClick={() => signOut({ callbackUrl: "/acceso" })}
+          className="w-full text-zinc-400 border-zinc-200 dark:border-zinc-700">
           <LogOut className="h-4 w-4 mr-1" /> {t("settings.logout")}
         </Button>
       </section>
