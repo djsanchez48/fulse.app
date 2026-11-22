@@ -1,26 +1,13 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { verifySessionToken, getAuthCookie } from "@/lib/auth";
+import { isPublicPath } from "@/lib/auth-paths";
 
-const PUBLIC_PATHS = [
-  "/acceso",
-  "/api/auth/login",
-  "/manifest.json",
-  "/sw.js",
-  "/favicon.ico",
-];
-
-function isPublic(pathname: string): boolean {
-  if (PUBLIC_PATHS.includes(pathname)) return true;
-  if (pathname.startsWith("/_next/")) return true;
-  if (pathname.startsWith("/icon-")) return true;
-  if (pathname.endsWith(".svg") || pathname.endsWith(".png") || pathname.endsWith(".ico") || pathname.endsWith(".woff2")) return true;
-  return false;
-}
-
-export default async function middleware(request: NextRequest) {
+// Next 16 renombro `middleware.ts` a `proxy.ts`: con el nombre viejo el archivo
+// deja de ejecutarse y la app queda sin autenticacion, sin ningun error visible.
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  if (isPublic(pathname)) return NextResponse.next();
+  if (isPublicPath(pathname)) return NextResponse.next();
 
   const cookieName = getAuthCookie();
   const token = request.cookies.get(cookieName)?.value;
