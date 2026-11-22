@@ -1,4 +1,4 @@
-const CACHE_NAME = "fulse-v2";
+const CACHE_NAME = "fulse-v3";
 
 const PRECACHE_URLS = [
   "/",
@@ -33,6 +33,12 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
 
   if (url.origin !== self.location.origin) return;
+
+  // Nunca tocar la API. El regreso de Google a /api/auth/callback/google es una
+  // navegacion de documento, asi que caia en el handler de abajo y el SW volvia
+  // a pedir la URL por su cuenta: el codigo de un solo uso se canjeaba dos veces
+  // y Google respondia invalid_grant. Cachear la API ademas nunca tuvo sentido.
+  if (url.pathname.startsWith("/api/")) return;
 
   if (request.destination === "font" || request.destination === "image") {
     event.respondWith(

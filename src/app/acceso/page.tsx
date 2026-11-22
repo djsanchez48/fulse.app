@@ -16,8 +16,12 @@ function AccesoForm() {
   const rawNext = searchParams.get("next") ?? "/";
   const next = /^\/(?!\/)/.test(rawNext) ? rawNext : "/";
 
-  // Auth.js manda aqui con ?error= cuando la allowlist rechaza la cuenta.
-  const rechazado = searchParams.get("error") !== null;
+  // Auth.js manda aqui con ?error= por motivos muy distintos. Solo AccessDenied
+  // significa que la allowlist rechazo la cuenta; tratar todo como rechazo hacia
+  // que un fallo tecnico (ej. invalid_grant) acusara al usuario de no tener permiso.
+  const error = searchParams.get("error");
+  const rechazado = error === "AccessDenied";
+  const falloTecnico = error !== null && !rechazado;
   const [loading, setLoading] = useState(false);
 
   return (
@@ -40,6 +44,12 @@ function AccesoForm() {
       {rechazado && (
         <p className="mt-4 text-center text-sm text-red-600 dark:text-red-400">
           {t("acceso.not_allowed")}
+        </p>
+      )}
+
+      {falloTecnico && (
+        <p className="mt-4 text-center text-sm text-zinc-500 dark:text-zinc-400">
+          {t("acceso.try_again")}
         </p>
       )}
     </div>
