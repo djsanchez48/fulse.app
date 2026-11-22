@@ -2,11 +2,12 @@
 
 import { useState, useEffect, useCallback, use } from "react";
 import { useRouter } from "next/navigation";
-import { Clock, Minus, Plus, Trash2, ChefHat, Pencil } from "lucide-react";
+import { Clock, Minus, Plus, Trash2, ChefHat, Pencil, Share, Bookmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CollectionSheet } from "@/components/recipes/CollectionSheet";
 import { InlineRecipeEditor } from "@/components/recipes/InlineRecipeEditor";
 import { useI18n } from "@/lib/i18n-context";
+import { buildShareText, fitsInWhatsappUrl, formatScaledQuantity, whatsappUrl } from "@/lib/recipes/share";
 import type { GeneratedRecipe } from "@/types/schemas";
 
 interface IngredientDetail {
@@ -38,6 +39,7 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
   const [cookCount, setCookCount] = useState(0);
   const [editing, setEditing] = useState(false);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "error">("idle");
+  const [shareMsg, setShareMsg] = useState("");
 
   useEffect(() => {
     fetch(`/api/recipes/${id}`).then((r) => r.json()).then((data) => {
@@ -56,12 +58,10 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
 
   const factor = recipe?.servings ? servings / recipe.servings : 1;
 
+  // Misma funcion que arma el texto a compartir: si divergen, lo compartido deja
+  // de coincidir con lo que el usuario ve en pantalla.
   function formatQuantity(ing: IngredientDetail): string {
-    if (ing.quantityText) return ing.quantityText;
-    if (ing.quantity == null) return "";
-    const scaled = ing.quantity * factor;
-    const formatted = Number.isInteger(scaled) ? scaled.toString() : scaled.toFixed(1);
-    return `${formatted}${ing.unit ? ` ${ing.unit}` : ""}`;
+    return formatScaledQuantity(ing, factor);
   }
 
   function toggleCheck(ingredientId: string) {
@@ -129,6 +129,36 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
     setChecked(new Set());
     setEditing(false);
     setSaveState("idle");
+  }
+
+  async function handleShare() {
+    if (!recipe) return;
+    const text = buildShareText(recipe, servings);
+    setShareMsg("");
+
+    // En movil la hoja nativa ya ofrece WhatsApp. Se comparte solo texto: un link
+    // a /recipes/[id] le mostraria el login a quien lo reciba, no la receta.
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({ title: recipe.title, text });
+        return;
+      } catch (e) {
+        // Cancelar la hoja nativa no es un error.
+        if (e instanceof DOMException && e.name === "AbortError") return;
+      }
+    }
+
+    if (fitsInWhatsappUrl(text)) {
+      window.open(whatsappUrl(text), "_blank", "noopener");
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(text);
+      setShareMsg(t("share.copied"));
+    } catch {
+      setShareMsg(t("share.failed"));
+    }
   }
 
   async function handleCook() {
@@ -222,12 +252,20 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
       </div>
 
       <div className="mt-8 flex gap-3">
-        <Button onClick={() => setSheetOpen(true)} className="flex-1">{t("detail.save")}</Button>
-        <Button variant="outline" onClick={() => setEditing(true)} className="gap-1.5">
-          <Pencil className="h-4 w-4" /> {t("detail.edit")}
+        <Button variant="outline" onClick={() => setSheetOpen(true)} aria-label={t("detail.save")} title={t("detail.save")} className="flex-1">
+          <Bookmark className="h-4 w-4" />
         </Button>
-        <Button variant="outline" onClick={() => { if (confirm(t("detail.delete_confirm"))) handleDelete(); }} disabled={deleting}><Trash2 className="h-4 w-4" /></Button>
+        <Button variant="outline" onClick={() => setEditing(true)} aria-label={t("detail.edit")} title={t("detail.edit")} className="flex-1">
+          <Pencil className="h-4 w-4" />
+        </Button>
+        <Button variant="outline" onClick={handleShare} aria-label={t("detail.share")} title={t("detail.share")} className="flex-1">
+          <Share className="h-4 w-4" />
+        </Button>
+        <Button variant="outline" onClick={() => { if (confirm(t("detail.delete_confirm"))) handleDelete(); }} disabled={deleting} aria-label={t("detail.delete")} title={t("detail.delete")} className="flex-1">
+          <Trash2 className="h-4 w-4" />
+        </Button>
       </div>
+      {shareMsg && <p className="mt-2 text-center text-xs text-zinc-500 dark:text-zinc-400">{shareMsg}</p>}
 
       {recipe && <CollectionSheet open={sheetOpen} onClose={() => setSheetOpen(false)} selected={recipe.collections.map((rc) => rc.collection.id)} onSave={handleSaveCollections} />}
     </div>
