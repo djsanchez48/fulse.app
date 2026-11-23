@@ -20,6 +20,9 @@ export function isPublicPath(pathname: string): boolean {
   // Tienen que ser publicos o se bloquearia el login a si mismo; su seguridad
   // la maneja Auth.js, y quien decide si entras es la allowlist del callback.
   if (pathname === "/api/auth" || pathname.startsWith("/api/auth/")) return true;
+  // Recetas compartidas por link. Solo este prefijo: la pagina es de solo
+  // lectura, con lista blanca de campos, y no dispara nada de IA.
+  if (pathname.startsWith("/r/")) return true;
   if (ROOT_STATIC_FILE.test(pathname)) return true;
   return false;
 }

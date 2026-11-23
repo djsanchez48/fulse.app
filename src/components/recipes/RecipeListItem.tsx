@@ -1,6 +1,6 @@
 "use client";
 
-import { Clock, Bookmark } from "lucide-react";
+import { Clock, Bookmark, Link as LinkIcon } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { useI18n } from "@/lib/i18n-context";
@@ -9,7 +9,7 @@ interface RecipeListItemProps {
   recipe: {
     id: string; title: string; description: string | null;
     prepTimeMinutes: number | null; cookTimeMinutes: number | null;
-    tags: string[]; source?: string;
+    tags: string[]; source?: string; shareToken?: string | null;
     collections: { collection: { id: string; name: string; emoji: string | null } }[];
   };
 }
@@ -24,7 +24,14 @@ export function RecipeListItem({ recipe }: RecipeListItemProps) {
         <CardContent className="p-4">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
-              <h3 className="font-semibold truncate">{recipe.title}</h3>
+              <div className="flex items-center gap-1.5">
+                <h3 className="font-semibold truncate">{recipe.title}</h3>
+                {recipe.shareToken && (
+                  <LinkIcon className="h-3.5 w-3.5 shrink-0 text-orange-500" aria-label={t("recipes.shared")}>
+                    <title>{t("recipes.shared")}</title>
+                  </LinkIcon>
+                )}
+              </div>
               {recipe.description && <p className="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400 line-clamp-2">{recipe.description}</p>}
               <div className="mt-2 flex flex-wrap items-center gap-1.5">
                 {recipe.source === "imported" && (

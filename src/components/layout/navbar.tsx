@@ -10,6 +10,10 @@ export function Navbar() {
   const { t } = useI18n();
   const pathname = usePathname();
 
+  // Las recetas compartidas por link las abre gente de afuera: no deben ver el
+  // encabezado ni la navegacion a las secciones privadas de la app.
+  if (pathname.startsWith("/r/")) return null;
+
   const navTabs = [
     { href: "/", label: t("nav.create"), icon: Sparkles },
     { href: "/recipes", label: t("nav.recipes"), icon: BookOpen },

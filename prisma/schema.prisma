@@ -29,6 +29,9 @@ model Recipe {
   nutriAnalyzedAt    DateTime?
   cookedCount     Int                @default(0)
   lastCookedAt    DateTime?
+  // Link publico: null = no compartida. Rotar el token invalida el link anterior.
+  shareToken      String?            @unique
+  sharedAt        DateTime?
 }
 
 model Ingredient {

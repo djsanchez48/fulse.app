@@ -5,6 +5,9 @@ import { useRouter, usePathname } from "next/navigation";
 
 const PUBLIC_PATHS = ["/acceso", "/bienvenida"];
 
+/** Receta compartida por link: no hay sesion ni onboarding que revisar. */
+const esPaginaPublica = (p: string) => p.startsWith("/r/");
+
 /**
  * Ya no decide si hay sesion: de eso se encarga `src/proxy.ts` en el servidor,
  * y la cookie de Auth.js es httpOnly, asi que desde JS no se puede leer —que es
@@ -16,7 +19,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   const [onboardingChecked, setOnboardingChecked] = useState(false);
 
   useEffect(() => {
-    if (PUBLIC_PATHS.includes(pathname)) return;
+    if (PUBLIC_PATHS.includes(pathname) || esPaginaPublica(pathname)) return;
     if (onboardingChecked) return;
 
     fetch("/api/profile")

@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useCallback, use } from "react";
 import { useRouter } from "next/navigation";
-import { Clock, Minus, Plus, Trash2, ChefHat, Pencil, Share, Bookmark } from "lucide-react";
+import { Clock, Minus, Plus, Trash2, ChefHat, Pencil, Share, Bookmark, Link as LinkIcon, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CollectionSheet } from "@/components/recipes/CollectionSheet";
 import { InlineRecipeEditor } from "@/components/recipes/InlineRecipeEditor";
 import { useI18n } from "@/lib/i18n-context";
-import { buildShareText, fitsInWhatsappUrl, formatScaledQuantity, whatsappUrl } from "@/lib/recipes/share";
+import { formatScaledQuantity } from "@/lib/recipes/share";
 import type { GeneratedRecipe } from "@/types/schemas";
 
 interface IngredientDetail {
@@ -22,6 +22,7 @@ interface RecipeDetail {
   servings: number | null; tags: string[]; ingredients: IngredientDetail[];
   collections: { collection: { id: string; name: string; emoji: string | null } }[];
   cookedCount: number; lastCookedAt: string | null;
+  shareToken: string | null;
 }
 
 export default function RecipeDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -40,10 +41,15 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
   const [editing, setEditing] = useState(false);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "error">("idle");
   const [shareMsg, setShareMsg] = useState("");
+  const [shareUrlState, setShareUrlState] = useState<string | null>(null);
+  const [sharing, setSharing] = useState(false);
+  const [confirmShare, setConfirmShare] = useState(false);
 
   useEffect(() => {
     fetch(`/api/recipes/${id}`).then((r) => r.json()).then((data) => {
-      setRecipe(data); setServings(data.servings ?? 2); setCookCount(data.cookedCount ?? 0); setLoading(false);
+      setRecipe(data); setServings(data.servings ?? 2); setCookCount(data.cookedCount ?? 0);
+      setShareUrlState(data.shareToken ? `${window.location.origin}/r/${data.shareToken}` : null);
+      setLoading(false);
     });
   }, [id]);
 
@@ -131,16 +137,14 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
     setSaveState("idle");
   }
 
-  async function handleShare() {
-    if (!recipe) return;
-    const text = buildShareText(recipe, servings);
+  /** Comparte el link. Asume que ya existe o acaba de crearse. */
+  async function compartirUrl(url: string) {
     setShareMsg("");
+    if (!recipe) return;
 
-    // En movil la hoja nativa ya ofrece WhatsApp. Se comparte solo texto: un link
-    // a /recipes/[id] le mostraria el login a quien lo reciba, no la receta.
     if (typeof navigator !== "undefined" && navigator.share) {
       try {
-        await navigator.share({ title: recipe.title, text });
+        await navigator.share({ title: recipe.title, url });
         return;
       } catch (e) {
         // Cancelar la hoja nativa no es un error.
@@ -148,16 +152,50 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
       }
     }
 
-    if (fitsInWhatsappUrl(text)) {
-      window.open(whatsappUrl(text), "_blank", "noopener");
-      return;
-    }
-
     try {
-      await navigator.clipboard.writeText(text);
+      await navigator.clipboard.writeText(url);
       setShareMsg(t("share.copied"));
     } catch {
       setShareMsg(t("share.failed"));
+    }
+  }
+
+  async function crearLink(): Promise<string | null> {
+    if (!recipe) return null;
+    setSharing(true);
+    try {
+      const res = await fetch(`/api/recipes/${recipe.id}/share`, { method: "POST" });
+      if (!res.ok) { setShareMsg(t("share.failed")); return null; }
+      const data = await res.json();
+      setShareUrlState(data.url);
+      return data.url as string;
+    } finally {
+      setSharing(false);
+    }
+  }
+
+  // Compartir ES publicar: si aun no hay link, se pide confirmacion explicita
+  // una sola vez por receta. Repetirla en cada compartida la volveria ruido.
+  async function handleShare() {
+    if (shareUrlState) { await compartirUrl(shareUrlState); return; }
+    setConfirmShare(true);
+  }
+
+  async function confirmarYCompartir() {
+    setConfirmShare(false);
+    const url = await crearLink();
+    if (url) await compartirUrl(url);
+  }
+
+  async function revocarLink() {
+    if (!recipe) return;
+    setSharing(true);
+    try {
+      const res = await fetch(`/api/recipes/${recipe.id}/share`, { method: "DELETE" });
+      if (res.ok) { setShareUrlState(null); setShareMsg(t("share.revoked")); }
+      else setShareMsg(t("share.failed"));
+    } finally {
+      setSharing(false);
     }
   }
 
@@ -258,7 +296,7 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
         <Button variant="outline" onClick={() => setEditing(true)} aria-label={t("detail.edit")} title={t("detail.edit")} className="flex-1">
           <Pencil className="h-4 w-4" />
         </Button>
-        <Button variant="outline" onClick={handleShare} aria-label={t("detail.share")} title={t("detail.share")} className="flex-1">
+        <Button variant="outline" onClick={handleShare} disabled={sharing} aria-label={t("detail.share")} title={t("detail.share")} className="flex-1">
           <Share className="h-4 w-4" />
         </Button>
         <Button variant="outline" onClick={() => { if (confirm(t("detail.delete_confirm"))) handleDelete(); }} disabled={deleting} aria-label={t("detail.delete")} title={t("detail.delete")} className="flex-1">
@@ -266,6 +304,47 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
         </Button>
       </div>
       {shareMsg && <p className="mt-2 text-center text-xs text-zinc-500 dark:text-zinc-400">{shareMsg}</p>}
+
+      {/* Confirmacion la primera vez: compartir esta receta la hace publica. */}
+      {confirmShare && (
+        <div className="mt-4 rounded-xl border border-orange-200 bg-orange-50/60 p-4 dark:border-orange-900/50 dark:bg-orange-950/20">
+          <p className="text-sm font-medium">{t("share.confirm_title")}</p>
+          <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">{t("share.confirm_body")}</p>
+          <div className="mt-3 flex gap-2">
+            <Button size="sm" onClick={confirmarYCompartir} disabled={sharing} className="flex-1">
+              {sharing ? <Loader2 className="h-4 w-4 animate-spin" /> : t("share.confirm_cta")}
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => setConfirmShare(false)}>
+              {t("share.cancel")}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Link activo: verlo, copiarlo y poder revocarlo. Sin esto, revocar seria
+          una funcion que existe pero no se puede usar. */}
+      {shareUrlState && !confirmShare && (
+        <div className="mt-4 rounded-xl border border-zinc-200 p-3 dark:border-zinc-800">
+          <div className="flex items-center gap-2">
+            <LinkIcon className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
+            <span className="truncate text-xs text-zinc-500 dark:text-zinc-400">{shareUrlState}</span>
+          </div>
+          <p className="mt-1.5 text-[11px] text-zinc-400 dark:text-zinc-500">{t("share.public_notice")}</p>
+          <div className="mt-2 flex gap-2">
+            <Button size="sm" variant="outline" className="flex-1 text-xs"
+              onClick={async () => { await navigator.clipboard.writeText(shareUrlState); setShareMsg(t("share.copied")); }}>
+              {t("share.copy")}
+            </Button>
+            <Button size="sm" variant="outline" className="flex-1 text-xs" onClick={crearLink} disabled={sharing}>
+              {t("share.regenerate")}
+            </Button>
+            <Button size="sm" variant="outline" className="flex-1 text-xs text-red-600 dark:text-red-400"
+              onClick={revocarLink} disabled={sharing}>
+              {t("share.revoke")}
+            </Button>
+          </div>
+        </div>
+      )}
 
       {recipe && <CollectionSheet open={sheetOpen} onClose={() => setSheetOpen(false)} selected={recipe.collections.map((rc) => rc.collection.id)} onSave={handleSaveCollections} />}
     </div>

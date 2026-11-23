@@ -103,16 +103,9 @@ escritorio, no es opcional.
 - Si `navigator.share` falla porque el usuario cancela la hoja nativa (lanza `AbortError`), no
   mostrar error — es una cancelación, no un fallo.
 
-## Fase 2 (opcional, no incluida): compartir por link
+## Fase 2: compartir por link
 
-Para mandar un link que el otro pueda abrir haría falta:
-- Una ruta pública `/r/[token]` agregada a `PUBLIC_PATHS` del middleware.
-- Un token por receta (columna nueva en `Recipe`), para no exponer `/recipes/[id]` ni hacer
-  enumerables los ids.
-- Una vista de solo lectura, sin la navegación de la app.
-- Decisión explícita de privacidad: cualquiera con el link ve la receta, y poder revocar el token.
-
-No se implementa hasta que la Fase 1 demuestre que compartir texto se queda corto.
+Desarrollada en su propio documento: **[HU-public-recipe-link.md](./HU-public-recipe-link.md)**.
 
 ## Fuera de alcance
 - Compartir imagen/tarjeta de la receta.

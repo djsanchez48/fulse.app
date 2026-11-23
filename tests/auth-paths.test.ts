@@ -71,3 +71,25 @@ describe("isPublicPath — rutas protegidas", () => {
     expect(isPublicPath("/api/auth-bypass")).toBe(false);
   });
 });
+
+describe("isPublicPath — recetas compartidas por link", () => {
+  it("deja pasar la página pública de una receta", () => {
+    expect(isPublicPath("/r/AbC123_xyz-456")).toBe(true);
+  });
+
+  it("abrir /r/ NO abre nada más", () => {
+    for (const p of [
+      "/recipes",              // mis recetas sigue privada
+      "/recipes/abc",
+      "/rx/abc",               // prefijo parecido
+      "/recetas/abc",
+      "/api/recipes",          // la API sigue cerrada
+      "/api/recipes/abc/share",
+      "/api/ai/generate",      // la IA nunca se abre: cuesta dinero
+      "/r",                    // sin token no hay nada que mostrar
+      "/settings",
+    ]) {
+      expect(isPublicPath(p), p).toBe(false);
+    }
+  });
+});

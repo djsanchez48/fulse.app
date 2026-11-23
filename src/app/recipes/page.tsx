@@ -15,7 +15,7 @@ interface Collection { id: string; name: string; emoji: string | null; _count: {
 interface RecipeItem {
   id: string; title: string; description: string | null;
   prepTimeMinutes: number | null; cookTimeMinutes: number | null;
-  tags: string[];
+  tags: string[]; shareToken?: string | null;
   collections: { collection: { id: string; name: string; emoji: string | null } }[];
 }
 
