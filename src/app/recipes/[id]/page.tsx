@@ -2,12 +2,14 @@
 
 import { useState, useEffect, useCallback, use } from "react";
 import { useRouter } from "next/navigation";
-import { Clock, Minus, Plus, Trash2, ChefHat, Pencil, Share, Bookmark, Link as LinkIcon, Loader2 } from "lucide-react";
+import { Clock, Minus, Plus, Trash2, ChefHat, Pencil, Share, Bookmark, Link as LinkIcon, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { CollectionSheet } from "@/components/recipes/CollectionSheet";
 import { InlineRecipeEditor } from "@/components/recipes/InlineRecipeEditor";
 import { useI18n } from "@/lib/i18n-context";
 import { formatScaledQuantity } from "@/lib/recipes/share";
+import type { RecipeDiff, RecipeComparable } from "@/lib/recipes/diff";
 import type { GeneratedRecipe } from "@/types/schemas";
 
 interface IngredientDetail {
@@ -44,6 +46,12 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
   const [shareUrlState, setShareUrlState] = useState<string | null>(null);
   const [sharing, setSharing] = useState(false);
   const [confirmShare, setConfirmShare] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState("");
+  const [aiDiff, setAiDiff] = useState<RecipeDiff | null>(null);
+  const [aiPropuesta, setAiPropuesta] = useState<RecipeComparable | null>(null);
+  const [aiCompartida, setAiCompartida] = useState(false);
 
   useEffect(() => {
     fetch(`/api/recipes/${id}`).then((r) => r.json()).then((data) => {
@@ -137,6 +145,50 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
     setSaveState("idle");
   }
 
+  async function pedirAjusteIA() {
+    if (!recipe || !aiPrompt.trim()) return;
+    setAiLoading(true); setAiError(""); setAiDiff(null); setAiPropuesta(null);
+    try {
+      const res = await fetch(`/api/recipes/${recipe.id}/adjust`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ instruction: aiPrompt }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setAiError(data.error ?? t("ai_edit.error")); return; }
+      setAiDiff(data.diff);
+      setAiPropuesta(data.propuesta);
+      setAiCompartida(!!data.compartida);
+    } catch {
+      setAiError(t("ai_edit.error"));
+    } finally {
+      setAiLoading(false);
+    }
+  }
+
+  // Aplicar reutiliza el PATCH que ya existe: el endpoint de IA solo propone.
+  async function aplicarAjusteIA() {
+    if (!aiPropuesta) return;
+    await handleEditSave({
+      title: aiPropuesta.title,
+      description: aiPropuesta.description ?? "",
+      prepTimeMinutes: aiPropuesta.prepTimeMinutes ?? 0,
+      cookTimeMinutes: aiPropuesta.cookTimeMinutes ?? 0,
+      servings: aiPropuesta.servings ?? 2,
+      tags: aiPropuesta.tags,
+      steps: aiPropuesta.steps,
+      ingredients: aiPropuesta.ingredients.map((i) => ({
+        name: i.nombre, quantity: i.quantity, unit: i.unit,
+        quantityText: i.quantityText, note: i.note,
+      })),
+    } as GeneratedRecipe);
+    descartarAjusteIA();
+  }
+
+  function descartarAjusteIA() {
+    setAiDiff(null); setAiPropuesta(null); setAiPrompt(""); setAiError("");
+  }
+
   /** Comparte el link. Asume que ya existe o acaba de crearse. */
   async function compartirUrl(url: string) {
     setShareMsg("");
@@ -224,6 +276,90 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
           onCancel={() => { setEditing(false); setSaveState("idle"); }}
           t={t}
         />
+        {/* Ajuste con IA: segunda forma de editar, misma puerta de entrada. */}
+        <div className="mt-4 rounded-xl border border-zinc-200 p-3 dark:border-zinc-800">
+          <div className="mb-2 flex items-center gap-1.5">
+            <Sparkles className="h-3.5 w-3.5 text-orange-500" />
+            <span className="text-sm font-medium">{t("ai_edit.title")}</span>
+          </div>
+
+          {!aiDiff && (
+            <>
+              <div className="flex gap-2">
+                <Input value={aiPrompt} onChange={(e) => setAiPrompt(e.target.value)}
+                  placeholder={t("ai_edit.placeholder")} disabled={aiLoading}
+                  onKeyDown={(e) => { if (e.key === "Enter") pedirAjusteIA(); }} />
+                <Button size="sm" onClick={pedirAjusteIA} disabled={aiLoading || !aiPrompt.trim()}>
+                  {aiLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : t("ai_edit.cta")}
+                </Button>
+              </div>
+              <p className="mt-1.5 text-[11px] text-zinc-400 dark:text-zinc-500">{t("ai_edit.hint")}</p>
+            </>
+          )}
+
+          {aiError && <p className="mt-2 text-xs text-red-500">{aiError}</p>}
+
+          {/* El diff: nunca se guarda sin que lo veas. */}
+          {aiDiff && (
+            <div className="space-y-3 text-xs">
+              {aiCompartida && (
+                <p className="rounded-lg bg-orange-50 p-2 text-orange-700 dark:bg-orange-950/30 dark:text-orange-400">
+                  {t("ai_edit.shared_warning")}
+                </p>
+              )}
+
+              {aiDiff.sinCambios && <p className="text-zinc-500">{t("ai_edit.no_changes")}</p>}
+
+              {aiDiff.campos.length > 0 && (
+                <div>
+                  <p className="mb-1 font-medium">{t("ai_edit.fields")}</p>
+                  {aiDiff.campos.map((c) => (
+                    <p key={c.campo} className="text-zinc-600 dark:text-zinc-400">
+                      {c.campo}: <span className="line-through opacity-60">{c.antes}</span> → <span className="text-zinc-900 dark:text-zinc-100">{c.despues}</span>
+                    </p>
+                  ))}
+                </div>
+              )}
+
+              {aiDiff.ingredientes.length > 0 && (
+                <div>
+                  <p className="mb-1 font-medium">{t("ai_edit.ingredients")}</p>
+                  {aiDiff.ingredientes.map((i, k) => (
+                    <p key={k} className="text-zinc-600 dark:text-zinc-400">
+                      {i.tipo === "agregado" && <span className="text-green-600 dark:text-green-400">+ {i.nombre} ({i.despues})</span>}
+                      {i.tipo === "eliminado" && <span className="text-red-600 dark:text-red-400">− {i.nombre}</span>}
+                      {i.tipo === "modificado" && <>{i.nombre}: <span className="line-through opacity-60">{i.antes}</span> → <span className="text-zinc-900 dark:text-zinc-100">{i.despues}</span></>}
+                    </p>
+                  ))}
+                </div>
+              )}
+
+              {aiDiff.pasos.length > 0 && (
+                <div>
+                  <p className="mb-1 font-medium">{t("ai_edit.steps")}</p>
+                  {aiDiff.pasos.map((p, k) => (
+                    <div key={k} className="mb-1.5 text-zinc-600 dark:text-zinc-400">
+                      <span className="font-medium">#{p.numero} </span>
+                      {p.tipo === "agregado" && <span className="text-green-600 dark:text-green-400">+ {p.despues}</span>}
+                      {p.tipo === "eliminado" && <span className="text-red-600 dark:text-red-400 line-through">{p.antes}</span>}
+                      {p.tipo === "modificado" && (
+                        <><span className="block line-through opacity-60">{p.antes}</span><span className="block text-zinc-900 dark:text-zinc-100">{p.despues}</span></>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex gap-2 pt-1">
+                <Button size="sm" className="flex-1" onClick={aplicarAjusteIA} disabled={aiDiff.sinCambios || saveState === "saving"}>
+                  {t("ai_edit.apply")}
+                </Button>
+                <Button size="sm" variant="outline" onClick={descartarAjusteIA}>{t("ai_edit.discard")}</Button>
+              </div>
+            </div>
+          )}
+        </div>
+
         <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">{t("edit.nutrition_reset")}</p>
         {saveState === "saving" && <p className="mt-2 text-xs text-zinc-400">{t("edit.saving")}</p>}
         {saveState === "error" && <p className="mt-2 text-xs text-red-500">{t("edit.error")}</p>}

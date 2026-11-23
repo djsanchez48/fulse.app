@@ -78,7 +78,10 @@ No se necesitan rutas nuevas para la Fase 1.
 - Si el análisis nutricional queda invalidado por la edición, mostrar el mismo estado "pendiente de
   análisis" que ya existe para recetas recién importadas (no hay que inventar UI nueva).
 
-## Fase 2 (opcional, no bloqueante): ajuste vía prompt de IA
+## Fase 2: ajuste vía prompt de IA
+
+Desarrollada en su propio documento: **[HU-edit-recipe-ai.md](./HU-edit-recipe-ai.md)** (ahí se
+corrige el enfoque de "patch parcial" que se esbozaba abajo).
 
 Para cambios difusos que no calzan en un form ("hazla apta para freidora de aire de 3.5L a menor
 temperatura"). Se implementaría como:

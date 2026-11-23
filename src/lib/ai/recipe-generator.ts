@@ -8,7 +8,7 @@ const deepseek = new OpenAI({
   baseURL: process.env.DEEPSEEK_BASE_URL ?? "https://api.deepseek.com/v1",
 });
 
-interface MemoryProfileData {
+export interface MemoryProfileData {
   ingredients?: Record<string, { score: number; count: number }>;
   tags?: Record<string, { score: number; count: number }>;
   badges?: Record<string, { score: number; count: number }>;
@@ -63,7 +63,7 @@ function buildMemoryBlock(memoryProfile: MemoryProfileData | undefined, lang: "e
   return `${header}\n${parts.join("\n")}${guidance}`;
 }
 
-function buildSystemPrompt(
+export function buildSystemPrompt(
   profile: {
     allergies: string[];
     restrictions: string[];
